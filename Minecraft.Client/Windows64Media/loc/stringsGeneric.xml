@@ -2962,23 +2962,23 @@ Can also be used for low-level lighting.</value>
 	</data>	
 
 	<data name="IDS_TILE_OAKWOOD_PLANKS">
-		<value>Oak Wood</value>
+		<value>Oak Planks</value>
 	</data>	
 
 	<data name="IDS_TILE_SPRUCEWOOD_PLANKS">
-		<value>Spruce Wood</value>
+		<value>Spruce Planks</value>
 	</data>	
 
 	<data name="IDS_TILE_BIRCHWOOD_PLANKS">
-		<value>Birch Wood</value>
+		<value>Birch Planks</value>
 	</data>	
 
 	<data name="IDS_TILE_JUNGLE_PLANKS">
-		<value>Jungle Wood</value>
+		<value>Jungle Planks</value>
 	</data>	
 
 	<data name="IDS_TILE_PLANKS">
-		<value>Wood Planks (any type)</value>
+		<value>Planks (any type)</value>
 	</data>	
 
 	<data name="IDS_TILE_SAPLING">
@@ -8857,7 +8857,7 @@ All Ender Chests in a world are linked. Items placed into an Ender Chest are acc
 	</data>
 
 	<data name="IDS_TILE_DARK_OAK_PLANKS">
-		<value>Dark Oak Wood</value>
+		<value>Dark Oak Planks</value>
 	</data>
 
 	<data name="IDS_TILE_STAIRS_ACACIAWOOD">
