@@ -9613,8 +9613,9 @@ bool CMinecraftApp::DLCContentRetrieved(eDLCMarketplaceType eType)
 
 void CMinecraftApp::SetAdditionalSkinBoxes(DWORD dwSkinID, SKIN_BOX *SkinBoxA, DWORD dwSkinBoxC)
 {
-	EntityRenderer *renderer = EntityRenderDispatcher::instance->getRenderer(eTYPE_PLAYER);
-	Model *pModel = renderer->getModel();
+	EntityRenderDispatcher *dispatcher = EntityRenderDispatcher::instance;
+	EntityRenderer *renderer = dispatcher ? dispatcher->getRenderer(eTYPE_PLAYER) : nullptr;
+	Model *pModel = renderer ? renderer->getModel() : nullptr;
 	vector<ModelPart *> *pvModelPart = new vector<ModelPart *>;
 	vector<SKIN_BOX *> *pvSkinBoxes = new vector<SKIN_BOX *>;
 
@@ -9645,8 +9646,9 @@ void CMinecraftApp::SetAdditionalSkinBoxes(DWORD dwSkinID, SKIN_BOX *SkinBoxA, D
 
 vector<ModelPart *> * CMinecraftApp::SetAdditionalSkinBoxes(DWORD dwSkinID, vector<SKIN_BOX *> *pvSkinBoxA)
 {
-	EntityRenderer *renderer = EntityRenderDispatcher::instance->getRenderer(eTYPE_PLAYER);
-	Model *pModel = renderer->getModel();
+	EntityRenderDispatcher *dispatcher = EntityRenderDispatcher::instance;
+	EntityRenderer *renderer = dispatcher ? dispatcher->getRenderer(eTYPE_PLAYER) : nullptr;
+	Model *pModel = renderer ? renderer->getModel() : nullptr;
 	vector<ModelPart *> *pvModelPart = new vector<ModelPart *>;
 
 	EnterCriticalSection( &csAdditionalModelParts );
