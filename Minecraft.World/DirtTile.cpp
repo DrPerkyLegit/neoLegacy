@@ -42,8 +42,20 @@ Icon* DirtTile::getTexture(int face, int data)
     if (data < 0 || data >= DIRT_NAMES_LENGTH)
         data = 0;
 
-    if (TEXTURE_NAMES[data] == L"dirt_podzol") {
-        return (face == Facing::UP) ? podzolTop : podzolSide;
+    if (TEXTURE_NAMES[data] == L"dirt_podzol") 
+    {
+        switch(face)
+        {
+        case Facing::UP:
+            return podzolTop;
+            break;
+        case Facing::DOWN:
+            return Tile::dirt->getTexture(face);
+            break;
+        default:
+            return podzolSide;
+            break;
+        }
     }
 
     return icons[data];
