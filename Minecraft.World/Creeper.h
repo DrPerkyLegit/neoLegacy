@@ -21,6 +21,8 @@ private:
 	int maxSwell;
 	int explosionRadius;
 
+	bool ignited;
+
 	void _init();
 
 public:
@@ -33,6 +35,8 @@ public:
 	virtual bool useNewAi();
 
 	virtual int getMaxFallDistance();
+
+	virtual bool mobInteract(shared_ptr<Player> player);
 
 protected:
 	virtual void causeFallDamage(float distance);
@@ -61,5 +65,9 @@ protected:
 public:
 	int getSwellDir();
 	void setSwellDir(int dir);
-	void thunderHit(const LightningBolt *lightningBolt) ;
+	void thunderHit(const LightningBolt *lightningBolt);
+
+public:
+	void Ignite();
+	bool isIgnited();
 };

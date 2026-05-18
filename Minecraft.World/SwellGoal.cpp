@@ -32,6 +32,12 @@ void SwellGoal::stop()
 
 void SwellGoal::tick()
 {
+	if(creeper->isIgnited())
+	{ 
+		creeper->setSwellDir(1);
+		return;
+	}
+
 	if (target.lock() == nullptr)
 	{
 		creeper->setSwellDir(-1);

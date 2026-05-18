@@ -26,6 +26,7 @@ void Creeper::_init()
 	oldSwell = 0;
 	maxSwell = 30;
 	explosionRadius = 3;
+	ignited = false;
 }
 
 Creeper::Creeper(Level *level) : Monster( level )
@@ -189,4 +190,39 @@ void Creeper::thunderHit(const LightningBolt *lightningBolt)
 {
 	Monster::thunderHit(lightningBolt);
 	entityData->set(DATA_IS_POWERED, static_cast<byte>(1));
+}
+
+void Creeper::Ignite()
+{
+	setSwellDir(1);
+	ignited = true;
+}
+
+bool Creeper::isIgnited()
+{
+	return ignited;
+}
+
+bool Creeper::mobInteract(shared_ptr<Player> player)
+{
+	shared_ptr<ItemInstance> item = player->inventory->getSelected();
+
+	if (item == nullptr || item->id != Item::flintAndSteel_Id)
+		return Mob::mobInteract(player);
+
+	playSound(eSoundType_FIRE_NEWIGNITE, 1, random->nextFloat() * 0.4f + 0.8f);
+	player->swing();
+
+	if (!level->isClientSide)
+	{
+		if (!isIgnited())
+		{
+			Ignite();
+			item->hurtAndBreak(1, player);
+			return true;
+		}
+		return Mob::mobInteract(player);
+	}
+
+	return true;
 }
