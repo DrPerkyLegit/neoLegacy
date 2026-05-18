@@ -156,7 +156,7 @@ bool Villager::mobInteract(shared_ptr<Player> player)
 	shared_ptr<ItemInstance> item = player->inventory->getSelected();
 	bool holdingSpawnEgg = item != nullptr && item->id == Item::spawnEgg_Id;
 
-	if (!holdingSpawnEgg && isAlive() && !isTrading() && !isBaby())
+	if (!player->isSneaking() && !holdingSpawnEgg && isAlive() && !isTrading() && !isBaby())
 	{
 		if (!level->isClientSide)
 		{
@@ -775,4 +775,20 @@ wstring Villager::getDisplayName()
 		break;
 	};
 	return app.GetString(name);
+}
+
+void Villager::thunderHit(const LightningBolt *lightningBolt)
+{
+	if (level->isClientSide) return;
+	shared_ptr<Witch> witch = std::make_shared<Witch>(level);
+	witch->moveTo(x, y, z, yRot, xRot);
+
+	if (this->hasCustomName())
+        witch->setCustomName(this->getCustomName());
+
+	if (this->isPersistenceRequired())
+		witch->setPersistenceRequired();
+	
+	level->addEntity(witch);
+	remove();
 }

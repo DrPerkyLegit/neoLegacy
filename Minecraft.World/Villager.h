@@ -147,4 +147,5 @@ public:
 	virtual shared_ptr<AgableMob> getBreedOffspring(shared_ptr<AgableMob> target);
 	virtual bool canBeLeashed();
 	virtual wstring getDisplayName();
+	virtual void thunderHit(const LightningBolt *lightningBolt);
 };
