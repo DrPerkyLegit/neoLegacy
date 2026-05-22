@@ -266,6 +266,32 @@ if(PLATFORM_NAME STREQUAL "Windows64")
   add_dependencies(Minecraft.Server GenerateItemNameMap)
 endif()
 
+#neo: added - SDK generation
+set(SDK_INPUT_DIRS
+  "${CMAKE_SOURCE_DIR}/Minecraft.World"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client"
+  "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/${PLATFORM_NAME}/4JLibs"
+)
+
+set(SDK_OUTPUT "${CMAKE_BINARY_DIR}/Minecraft.Client/$<CONFIG>/sdk.h")
+add_custom_command(
+  OUTPUT "${SDK_OUTPUT}"
+  COMMAND ${CMAKE_COMMAND}
+    "-DINPUT_DIRS=${SDK_INPUT_DIRS}"
+    "-DOUTPUT_FILE=${SDK_OUTPUT}"
+    -P "${CMAKE_SOURCE_DIR}/cmake/GenerateSdk.cmake"
+  DEPENDS
+    "${CMAKE_SOURCE_DIR}/cmake/GenerateSdk.cmake"
+  COMMENT "Generating sdk.h..."
+  VERBATIM
+)
+
+add_custom_target(GenerateSdk ALL
+  DEPENDS "${SDK_OUTPUT}"
+)
+
+set_property(TARGET GenerateSdk PROPERTY FOLDER "Build")
 target_include_directories(Minecraft.Client PRIVATE
   "${CMAKE_CURRENT_BINARY_DIR}/generated"
 )
