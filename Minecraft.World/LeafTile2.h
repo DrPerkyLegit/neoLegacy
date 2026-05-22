@@ -13,7 +13,7 @@ public:
 	static const unsigned int LEAF2_NAMES[LEAF2_NAMES_SIZE];
 
 private:
-	//[0] = Fancy (Trasparenti), [1] = Fast (Opache)
+	//index 0, fancy;  index 1, fast
 	static const wstring TEXTURES[2][2];
 	Icon *icons[2][2];
 
