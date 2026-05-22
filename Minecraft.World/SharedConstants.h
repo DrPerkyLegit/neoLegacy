@@ -7,7 +7,7 @@ class SharedConstants
 	public:
 		static void staticCtor();
 		static const wstring VERSION_STRING;
-		static const int NETWORK_PROTOCOL_VERSION = 78;
+		static const int NETWORK_PROTOCOL_VERSION = 79;
 		static const bool INGAME_DEBUG_OUTPUT = false;
 		
 		// NOT texture resolution. How many sub-blocks each block face is made up of.

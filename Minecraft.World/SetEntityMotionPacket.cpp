@@ -49,9 +49,9 @@ SetEntityMotionPacket::SetEntityMotionPacket(int id, double xd, double yd, doubl
 
 void SetEntityMotionPacket::read(DataInputStream *dis) //throws IOException 
 {
-	short idAndFlag = dis->readShort();
-	id = idAndFlag & 0x07ff;
-	if( idAndFlag & 0x0800 )
+	useBytes = dis->readBoolean();
+	id = dis->readInt();
+	if(useBytes)
 	{
 		xa = static_cast<int>(dis->readByte());
 		ya = static_cast<int>(dis->readByte());
@@ -62,29 +62,28 @@ void SetEntityMotionPacket::read(DataInputStream *dis) //throws IOException
 		xa *= 16;
 		ya *= 16;
 		za *= 16;
-		useBytes = true;
 	}
 	else
 	{
 		xa = dis->readShort();
 		ya = dis->readShort();
 		za = dis->readShort();
-		useBytes = false;
 	}
 }
 
 void SetEntityMotionPacket::write(DataOutputStream *dos) //throws IOException 
 {
+	dos->writeBoolean(useBytes);
 	if( useBytes )
 	{
-		dos->writeShort(id | 0x800);
+		dos->writeInt(id);
 		dos->writeByte(xa/16);
 		dos->writeByte(ya/16);
 		dos->writeByte(za/16);
 	}
 	else
 	{
-		dos->writeShort(id);
+		dos->writeInt(id);
 		dos->writeShort(xa);
 		dos->writeShort(ya);
 		dos->writeShort(za);
@@ -98,7 +97,7 @@ void SetEntityMotionPacket::handle(PacketListener *listener)
 
 int SetEntityMotionPacket::getEstimatedSize()
 {
-	return useBytes ? 5 : 8;
+	return useBytes ? 8 : 11;
 }
 
 bool SetEntityMotionPacket::canBeInvalidated()

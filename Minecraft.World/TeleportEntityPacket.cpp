@@ -39,7 +39,7 @@ TeleportEntityPacket::TeleportEntityPacket(int id, int x, int y, int z, byte yRo
 
 void TeleportEntityPacket::read(DataInputStream *dis) //throws IOException
 {
-	id = dis->readShort();
+	id = dis->readInt();
 #ifdef _LARGE_WORLDS
 	x = dis->readInt();
 	y = dis->readInt();
@@ -55,7 +55,7 @@ void TeleportEntityPacket::read(DataInputStream *dis) //throws IOException
 
 void TeleportEntityPacket::write(DataOutputStream *dos) //throws IOException 
 {
-	dos->writeShort(id);
+	dos->writeInt(id);
 #ifdef _LARGE_WORLDS
 	dos->writeInt(x);
 	dos->writeInt(y);
@@ -76,7 +76,7 @@ void TeleportEntityPacket::handle(PacketListener *listener)
 
 int TeleportEntityPacket::getEstimatedSize() 
 {
-	return 2 + 2 + 2 + 2 + 1 + 1;
+	return 4 + 2 + 2 + 2 + 1 + 1;
 }
 
 bool TeleportEntityPacket::canBeInvalidated()

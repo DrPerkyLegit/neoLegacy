@@ -54,7 +54,7 @@ AddEntityPacket::AddEntityPacket(shared_ptr<Entity> e, int type, int data, int y
 
 void AddEntityPacket::read(DataInputStream *dis) // throws IOException  TODO 4J JEV add throws statement
 {
-	id = dis->readShort();
+	id = dis->readInt();
 	type = dis->readByte();
 #ifdef _LARGE_WORLDS
 	x = dis->readInt();
@@ -78,7 +78,7 @@ void AddEntityPacket::read(DataInputStream *dis) // throws IOException  TODO 4J 
 
 void AddEntityPacket::write(DataOutputStream *dos) // throws IOException TODO 4J JEV add throws statement
 {
-	dos->writeShort(id);
+	dos->writeInt(id);
 	dos->writeByte(type);
 #ifdef _LARGE_WORLDS
 	dos->writeInt(x);
@@ -107,5 +107,5 @@ void AddEntityPacket::handle(PacketListener *listener)
 
 int AddEntityPacket::getEstimatedSize() 
 {
-	return 11 + data > -1 ? 6 : 0;
+	return (11 + data > -1 ? 6 : 0) + 2;
 }

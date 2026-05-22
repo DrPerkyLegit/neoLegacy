@@ -30,7 +30,7 @@ MoveEntityPacket::MoveEntityPacket(int id)
 
 void MoveEntityPacket::read(DataInputStream *dis) //throws IOException 
 {
-	id = dis->readShort();
+	id = dis->readInt();
 }
 
 void MoveEntityPacket::write(DataOutputStream *dos) //throws IOException
@@ -40,7 +40,7 @@ void MoveEntityPacket::write(DataOutputStream *dos) //throws IOException
 		// We shouln't be tracking an entity that doesn't have a short type of id
 		DEBUG_BREAK();
 	}
-	dos->writeShort(static_cast<short>(id));
+	dos->writeInt(static_cast<short>(id));
 }
 
 void MoveEntityPacket::handle(PacketListener *listener)
@@ -50,7 +50,7 @@ void MoveEntityPacket::handle(PacketListener *listener)
 
 int MoveEntityPacket::getEstimatedSize() 
 {
-	return 2;
+	return 4;
 }
 
 bool MoveEntityPacket::canBeInvalidated()
@@ -101,7 +101,7 @@ void MoveEntityPacket::PosRot::write(DataOutputStream *dos) //throws IOException
 
 int MoveEntityPacket::PosRot::getEstimatedSize() 
 {
-	return 2+5;
+	return 4+5;
 }
 
 MoveEntityPacket::Pos::Pos() 
@@ -133,7 +133,7 @@ void MoveEntityPacket::Pos::write(DataOutputStream *dos) //throws IOException
 
 int MoveEntityPacket::Pos::getEstimatedSize()
 {
-	return 2+3;
+	return 4+3;
 }
 
 MoveEntityPacket::Rot::Rot() 
@@ -164,5 +164,5 @@ void MoveEntityPacket::Rot::write(DataOutputStream *dos) //throws IOException
 
 int MoveEntityPacket::Rot::getEstimatedSize()
 {
-	return 2+2;
+	return 4+2;
 }

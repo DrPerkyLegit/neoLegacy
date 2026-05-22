@@ -66,7 +66,7 @@ AddMobPacket::AddMobPacket(shared_ptr<LivingEntity> mob, int yRotp, int xRotp, i
 
 void AddMobPacket::read(DataInputStream *dis) //throws IOException
 {
-	id = dis->readShort();
+	id = dis->readInt();
 	type = dis->readByte() & 0xff;
 #ifdef _LARGE_WORLDS
 	x = dis->readInt();
@@ -90,7 +90,7 @@ void AddMobPacket::read(DataInputStream *dis) //throws IOException
 
 void AddMobPacket::write(DataOutputStream *dos) //throws IOException
 {
-	dos->writeShort(id);
+	dos->writeInt(id);
 	dos->writeByte(type & 0xff);
 #ifdef _LARGE_WORLDS
 	dos->writeInt(x);
@@ -127,7 +127,7 @@ int AddMobPacket::getEstimatedSize()
 		// 4J Stu - This is an incoming value which we aren't currently analysing
 		//size += unpack->get
 	}
-	return size;
+	return size + 2;
 }
 
 vector<shared_ptr<SynchedEntityData::DataItem> > *AddMobPacket::getUnpackedData() 

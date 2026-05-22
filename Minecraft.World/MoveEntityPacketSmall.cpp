@@ -37,7 +37,7 @@ MoveEntityPacketSmall::MoveEntityPacketSmall(int id)
 
 void MoveEntityPacketSmall::read(DataInputStream *dis) //throws IOException 
 {
-	id = dis->readShort();
+	id = dis->readInt();
 }
 
 void MoveEntityPacketSmall::write(DataOutputStream *dos) //throws IOException
@@ -47,7 +47,7 @@ void MoveEntityPacketSmall::write(DataOutputStream *dos) //throws IOException
 		// We shouln't be tracking an entity that doesn't have a short type of id
 		DEBUG_BREAK();
 	}
-	dos->writeShort(static_cast<short>(id));
+	dos->writeInt(id);
 }
 
 void MoveEntityPacketSmall::handle(PacketListener *listener)
@@ -57,7 +57,7 @@ void MoveEntityPacketSmall::handle(PacketListener *listener)
 
 int MoveEntityPacketSmall::getEstimatedSize() 
 {
-	return 2;
+	return 4;
 }
 
 bool MoveEntityPacketSmall::canBeInvalidated()
@@ -88,13 +88,12 @@ MoveEntityPacketSmall::PosRot::PosRot(int id, char xa, char ya, char za, char yR
 
 void MoveEntityPacketSmall::PosRot::read(DataInputStream *dis) //throws IOException 
 {
-	int idAndRot = dis->readShort();
-	this->id = idAndRot & 0x07ff;
-	this->yRot = idAndRot >> 11;
-	int xAndYAndZ = (int)dis->readShort();
-	this->xa = xAndYAndZ >> 11; 
-	this->ya = (xAndYAndZ << 21 ) >> 26;
-	this->za = (xAndYAndZ << 27 ) >> 27;
+	this->id = dis->readInt();
+	this->yRot = dis->readChar();
+	int XandYandZ = (int)dis->readShort();
+	this->xa = XandYandZ >> 11;
+	this->ya = (XandYandZ << 21 ) >> 26;
+	this->za = (XandYandZ << 27 ) >> 27;
 }
 
 void MoveEntityPacketSmall::PosRot::write(DataOutputStream *dos) //throws IOException 
@@ -104,15 +103,15 @@ void MoveEntityPacketSmall::PosRot::write(DataOutputStream *dos) //throws IOExce
 		// We shouln't be tracking an entity that doesn't have a short type of id
 		DEBUG_BREAK();
 	}
-	short idAndRot = id | yRot << 11;
-	dos->writeShort(idAndRot);
-	short xAndYAndZ = ( xa << 11 ) | ( ( ya & 0x3f ) << 5 ) | ( za & 0x1f );
-	dos->writeShort(xAndYAndZ);
+	dos->writeInt(id);
+	dos->writeChar(yRot);
+	short XandYandZ = ( xa << 11 ) | ( ( ya & 0x3f ) << 5 ) | ( za & 0x1f );
+	dos->writeShort(XandYandZ);
 }
 
 int MoveEntityPacketSmall::PosRot::getEstimatedSize() 
 {
-	return 4;
+	return 7;
 }
 
 MoveEntityPacketSmall::Pos::Pos() 
@@ -128,9 +127,8 @@ MoveEntityPacketSmall::Pos::Pos(int id, char xa, char ya, char za) : MoveEntityP
 
 void MoveEntityPacketSmall::Pos::read(DataInputStream *dis) //throws IOException 
 {
-	int idAndY = dis->readShort();
-	this->id = idAndY & 0x07ff;
-	this->ya = idAndY >> 11;
+	this->id = dis->readInt();
+	this->ya = dis->readChar();
 	int XandZ = (int)static_cast<signed char>(dis->readByte());
 	xa = XandZ >> 4;
 	za = ( XandZ << 28 ) >> 28;
@@ -143,15 +141,15 @@ void MoveEntityPacketSmall::Pos::write(DataOutputStream *dos) //throws IOExcepti
 		// We shouln't be tracking an entity that doesn't have a short type of id
 		DEBUG_BREAK();
 	}
-	short idAndY = id | ya << 11;
-	dos->writeShort(idAndY);
+	dos->writeInt(id);
+	dos->writeChar(ya);
 	char XandZ = ( xa << 4 ) | ( za & 0x0f );
 	dos->writeByte(XandZ);
 }
 
 int MoveEntityPacketSmall::Pos::getEstimatedSize()
 {
-	return 3;
+	return 7;
 }
 
 MoveEntityPacketSmall::Rot::Rot() 
@@ -169,9 +167,8 @@ MoveEntityPacketSmall::Rot::Rot(int id, char yRot, char xRot) : MoveEntityPacket
 
 void MoveEntityPacketSmall::Rot::read(DataInputStream *dis) //throws IOException 
 {
-	int idAndRot = (int)dis->readShort();
-	this->id = idAndRot & 0x07ff;
-	this->yRot = idAndRot >> 11;
+	this->id = dis->readInt();
+	this->yRot = dis->readChar();
 }
 
 void MoveEntityPacketSmall::Rot::write(DataOutputStream *dos) //throws IOException 
@@ -181,11 +178,11 @@ void MoveEntityPacketSmall::Rot::write(DataOutputStream *dos) //throws IOExcepti
 		// We shouln't be tracking an entity that doesn't have a short type of id
 		DEBUG_BREAK();
 	}
-	short idAndRot = id | yRot << 11;
-	dos->writeShort(idAndRot);
+	dos->writeInt(id);
+	dos->writeChar(yRot);
 }
 
 int MoveEntityPacketSmall::Rot::getEstimatedSize()
 {
-	return 2;
+	return 5;
 }
