@@ -27,8 +27,7 @@ private:
 
 	static DWORD tlsIdx;
 	// 4J - was just a static but implemented with TLS for our version
-	static bool ignoreUpdate();	
-	static void ignoreUpdate(bool set);	
+	//code removed so the above comment no longer applies
 
 public:
 	PistonBaseTile(int id, bool isSticky);
