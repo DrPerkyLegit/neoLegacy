@@ -11,6 +11,12 @@ namespace FourKitBridge
         kHandlerKind_PlayerMove  = 2,
     };
 
+    void Transformation_WriteItemMetaToBuffer(std::shared_ptr<ItemInstance> item, unsigned char* outBuffer, int& offset);
+    void Transformation_ReadItemMetaFromBuffer(ItemInstance* item, unsigned char* itemData, int& offset);
+    void Transformation_WriteItemToBuffer(std::shared_ptr<ItemInstance> item, unsigned char* outBuffer, int& offset);
+    std::shared_ptr<ItemInstance> Transformation_ReadItemFromBuffer(unsigned char* itemData, int& offset);
+    void Transformation_ReadItemFromBuffer(std::shared_ptr<ItemInstance> item, unsigned char* itemData, int& offset);
+
     void __cdecl NativeSetHandlerMask(uint32_t mask);
     bool HasHandlers(int kind);
 
@@ -41,7 +47,7 @@ namespace FourKitBridge
     int __cdecl NativeCreateExplosion(int dimId, double x, double y, double z, float power, int setFire, int breakBlocks);
     int __cdecl NativeStrikeLightning(int dimId, double x, double y, double z, int effectOnly);
     int __cdecl NativeSetSpawnLocation(int dimId, int x, int y, int z);
-    void __cdecl NativeDropItem(int dimId, double x, double y, double z, int itemId, int count, int auxValue, int naturally);
+    void __cdecl NativeDropItem(int dimId, double x, double y, double z, unsigned char* itemData, int naturally);
 
     // plr
     void __cdecl NativeKickPlayer(int entityId, int reason);
@@ -54,15 +60,15 @@ namespace FourKitBridge
     int __cdecl NativeSendRaw(int entityId, unsigned char* dataBuf, int dataBufSize);
 
     // inv
-    void __cdecl NativeGetPlayerInventory(int entityId, int *outData);
-    void __cdecl NativeSetPlayerInventorySlot(int entityId, int slot, int itemId, int count, int aux);
-    void __cdecl NativeGetContainerContents(int entityId, int *outData, int maxSlots);
-    void __cdecl NativeSetContainerSlot(int entityId, int slot, int itemId, int count, int aux);
+    void __cdecl NativeGetPlayerInventory(int entityId, unsigned char *outData);
+    void __cdecl NativeSetPlayerInventorySlot(int entityId, int slot, unsigned char* itemData);
+    void __cdecl NativeGetContainerContents(int entityId, unsigned char *outData, int maxSlots);
+    void __cdecl NativeSetContainerSlot(int entityId, int slot, unsigned char* itemData);
     void __cdecl NativeGetContainerViewerEntityIds(int entityId, int *outIds, int maxCount, int *outCount);
     void __cdecl NativeCloseContainer(int entityId);
-    void __cdecl NativeOpenVirtualContainer(int entityId, int nativeType, const char *titleUtf8, int titleByteLen, int slotCount, int *itemsBuf);
-    int __cdecl NativeGetItemMeta(int entityId, int slot, char *outBuf, int bufSize);
-    void __cdecl NativeSetItemMeta(int entityId, int slot, const char *inBuf, int bufSize);
+    void __cdecl NativeOpenVirtualContainer(int entityId, int nativeType, int slotCount, unsigned char* containerBuffer);
+    //int __cdecl NativeGetItemMeta(int entityId, int slot, char *outBuf, int bufSize);
+    //void __cdecl NativeSetItemMeta(int entityId, int slot, const char *inBuf, int bufSize);
     void __cdecl NativeSetHeldItemSlot(int entityId, int slot);
 
     // carried item (cursor) & ender chest

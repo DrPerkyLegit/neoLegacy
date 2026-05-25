@@ -522,19 +522,11 @@ void PlayerConnection::handlePlayerAction(shared_ptr<PlayerActionPacket> packet)
 			shared_ptr<ItemInstance> selected = player->inventory->getSelected();
 			if (selected != nullptr && selected->count > 0)
 			{
-				int outId = selected->id, outCount = 1, outAux = selected->getAuxValue();
-				bool cancelled = FourKitBridge::FirePlayerDropItem(
-					player->entityId, selected->id, 1, selected->getAuxValue(),
-					&outId, &outCount, &outAux);
+				bool cancelled = FourKitBridge::FirePlayerDropItem(player->entityId, selected);
 				if (cancelled)
 					return;
 				player->inventory->removeItem(player->inventory->selected, 1);
-				shared_ptr<ItemInstance> dropItem = (outId == selected->id)
-					? selected->copy()
-					: std::make_shared<ItemInstance>(outId, outCount, outAux);
-				dropItem->count = outCount;
-				if (outAux != selected->getAuxValue()) dropItem->setAuxValue(outAux);
-				player->drop(dropItem);
+				player->drop(selected->copy());
 				return;
 			}
 		}
@@ -549,19 +541,12 @@ void PlayerConnection::handlePlayerAction(shared_ptr<PlayerActionPacket> packet)
 			shared_ptr<ItemInstance> selected = player->inventory->getSelected();
 			if (selected != nullptr && selected->count > 0)
 			{
-				int outId = selected->id, outCount = selected->count, outAux = selected->getAuxValue();
-				bool cancelled = FourKitBridge::FirePlayerDropItem(
-					player->entityId, selected->id, selected->count, selected->getAuxValue(),
-					&outId, &outCount, &outAux);
+				bool cancelled = FourKitBridge::FirePlayerDropItem(player->entityId, selected);
 				if (cancelled)
 					return;
+
 				player->inventory->removeItem(player->inventory->selected, selected->count);
-				shared_ptr<ItemInstance> dropItem = (outId == selected->id)
-					? selected->copy()
-					: std::make_shared<ItemInstance>(outId, outCount, outAux);
-				dropItem->count = outCount;
-				if (outAux != selected->getAuxValue()) dropItem->setAuxValue(outAux);
-				player->drop(dropItem);
+				player->drop(selected->copy());
 				return;
 			}
 		}

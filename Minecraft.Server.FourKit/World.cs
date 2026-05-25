@@ -472,7 +472,20 @@ public class World
     /// <param name="item">ItemStack to drop.</param>
     public void dropItem(Location location, ItemStack item)
     {
-        NativeBridge.DropItem?.Invoke(_dimensionId, location.X, location.Y, location.Z, item.getTypeId(), item.getAmount(), item.getDurability(), 0);
+        byte[] singleItemBuffer = new byte[512]; //about half a kb of memory
+        GCHandle singleItemBufferHandle = GCHandle.Alloc(singleItemBuffer, GCHandleType.Pinned);
+
+        try
+        {
+            int offset = 0;
+            ItemStack.WriteToBuffer(item, singleItemBuffer, ref offset);
+
+            NativeBridge.DropItem?.Invoke(_dimensionId, location.X, location.Y, location.Z, singleItemBufferHandle.AddrOfPinnedObject(), 0);
+        }
+        finally
+        {
+            singleItemBufferHandle.Free();
+        }
     }
 
     /// <summary>
@@ -482,7 +495,20 @@ public class World
     /// <param name="item">ItemStack to drop.</param>
     public void dropItemNaturally(Location location, ItemStack item)
     {
-        NativeBridge.DropItem?.Invoke(_dimensionId, location.X, location.Y, location.Z, item.getTypeId(), item.getAmount(), item.getDurability(), 1);
+        byte[] singleItemBuffer = new byte[512]; //about half a kb of memory
+        GCHandle singleItemBufferHandle = GCHandle.Alloc(singleItemBuffer, GCHandleType.Pinned);
+
+        try
+        {
+            int offset = 0;
+            ItemStack.WriteToBuffer(item, singleItemBuffer, ref offset);
+
+            NativeBridge.DropItem?.Invoke(_dimensionId, location.X, location.Y, location.Z, singleItemBufferHandle.AddrOfPinnedObject(), 1);
+        }
+        finally
+        {
+            singleItemBufferHandle.Free();
+        }
     }
 
     /// <summary>

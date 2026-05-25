@@ -19,13 +19,13 @@ public class PlayerInventory : Inventory
     private int _heldItemSlot;
     internal HumanEntity? _holder;
 
-    private int[] syncBuffer;
+    private byte[] syncBuffer;
     private GCHandle syncBufferHandle;
 
     internal PlayerInventory()
         : base("Player", InventoryType.PLAYER, INVENTORY_SIZE)
     {
-        this.syncBuffer = new int[121];
+        this.syncBuffer = new byte[4*1024]; //about 4kb of memory
         this.syncBufferHandle = GCHandle.Alloc(this.syncBuffer, GCHandleType.Pinned);
     }
 
@@ -38,54 +38,15 @@ public class PlayerInventory : Inventory
 
         NativeBridge.GetPlayerInventory(entityId, this.syncBufferHandle.AddrOfPinnedObject());
 
-        byte[]? metadataBuffer = null;
-        GCHandle? metadataBufferHandle = null;
+        int offset = 0;
+        _heldItemSlot = this.syncBuffer[offset]; offset++;
 
         for (int i = 0; i < INVENTORY_SIZE; i++)
         {
-            int id = this.syncBuffer[i * 3 + 0];
-            int aux = this.syncBuffer[i * 3 + 1];
-            int packed = this.syncBuffer[i * 3 + 2];
-
-            ushort count = (ushort)((packed >> 8) & 0xFFFF);
-
-            byte flags = (byte)((packed >> 24) & 0xFF);
-            bool hasMetadata = (flags & 0x1) != 0;
-
             _items[i]?.UnbindFromInventory();
-            if (id > 0 && count > 0)
-            {
-                if (_items[i] == null)
-                {
-                    _items[i] = new ItemStack(id, count, (short)aux);
-                }
-                else
-                {
-                    _items[i]!.setTypeId(id);
-                    _items[i]!.setAmount(count);
-                    _items[i]!.setDurability((short)aux);
-                }
 
-                if (hasMetadata)
-                {
-                    var meta = ReadMetaFromNative(entityId, i, metadataBuffer, metadataBufferHandle);
-                    if (meta != null)
-                    {
-                        _items[i]!.setItemMetaInternal(meta);
-                    }
-                        
-                }
-                _items[i]!.BindToInventory(this, i);
-            }
-            else
-            {
-                _items[i] = null;
-            }
+            _items[i] = ItemStack.ReadFromBuffer(this.syncBuffer, ref offset);
         }
-        _heldItemSlot = this.syncBuffer[120];
-
-        if (metadataBufferHandle.HasValue)
-            metadataBufferHandle.Value.Free();
     }
 
     /// <inheritdoc/>
@@ -96,11 +57,20 @@ public class PlayerInventory : Inventory
         if (_holder != null && NativeBridge.SetPlayerInventorySlot != null &&
             index >= 0 && index < INVENTORY_SIZE)
         {
-            int id = item?.getTypeId() ?? 0;
-            int count = item?.getAmount() ?? 0;
-            int aux = item?.getDurability() ?? 0;
-            NativeBridge.SetPlayerInventorySlot(_holder.getEntityId(), index, id, count, aux);
-            WriteMetaToNative(_holder.getEntityId(), index, item?.getItemMetaInternal());
+
+            byte[] singleItemBuffer = new byte[512]; //about half a kb of memory
+            GCHandle singleItemBufferHandle = GCHandle.Alloc(singleItemBuffer, GCHandleType.Pinned);
+
+            try
+            {
+                int offset = 0;
+                ItemStack.WriteToBuffer(item, singleItemBuffer, ref offset);
+
+                NativeBridge.SetPlayerInventorySlot(_holder.getEntityId(), index, singleItemBufferHandle.AddrOfPinnedObject());
+            } finally
+            {
+                singleItemBufferHandle.Free();
+            }
         }
     }
 
@@ -248,7 +218,7 @@ public class PlayerInventory : Inventory
     /// <returns>The HumanEntity that owns this inventory.</returns>
     public HumanEntity? getHolder() => _holder;
 
-    private static ItemMeta? ReadMetaFromNative(int entityId, int slot, byte[]? buffer, GCHandle? bufferHandle)
+    /*private static ItemMeta? ReadMetaFromNative(int entityId, int slot, byte[]? buffer, GCHandle? bufferHandle)
     {
         if (NativeBridge.GetItemMeta == null)
             return null;
@@ -409,5 +379,5 @@ public class PlayerInventory : Inventory
         {
             gh.Free();
         }
-    }
+    }*/
 }

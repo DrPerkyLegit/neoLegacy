@@ -64,8 +64,7 @@ namespace FourKitBridge
                         int *outNewExp, int *outNewLevel, int *outKeepLevel);
     int MapEntityType(int nativeType);
     int MapDamageCause(void *source);
-    bool FirePlayerDropItem(int entityId, int itemId, int itemCount, int itemAux,
-                            int *outItemId, int *outItemCount, int *outItemAux);
+    bool FirePlayerDropItem(int entityId, std::shared_ptr<ItemInstance> item);
     bool FirePlayerInteract(int entityId, int action,
                             int itemId, int itemCount, int itemAux,
                             int clickedX, int clickedY, int clickedZ,
@@ -164,11 +163,8 @@ namespace FourKitBridge
     }
     inline int MapEntityType(int nativeType) { return nativeType; }
     inline int MapDamageCause(void*) { return 0; }
-    inline bool FirePlayerDropItem(int, int itemId, int itemCount, int itemAux, int *outItemId, int *outItemCount, int *outItemAux)
+    inline bool FirePlayerDropItem(int, std::shared_ptr<ItemInstance>)
     {
-        if (outItemId) *outItemId = itemId;
-        if (outItemCount) *outItemCount = itemCount;
-        if (outItemAux) *outItemAux = itemAux;
         return false;
     }
     inline bool FirePlayerInteract(int, int, int, int, int, int, int, int, int, int, int *outUseItemInHand)

@@ -1,7 +1,8 @@
 namespace Minecraft.Server.FourKit.Entity;
 
-using System.Runtime.InteropServices;
 using Minecraft.Server.FourKit.Inventory;
+using System.Drawing;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Represents a human entity in the world (e.g. a player).
@@ -157,28 +158,35 @@ public abstract class HumanEntity : LivingEntity, InventoryHolder
             _ => 0,
         };
 
-        int size = inventory.getSize();
-        int[] buf = new int[size * 3];
-        for (int i = 0; i < size; i++)
+        int offset = 0;
+        byte[] containerBuffer = new byte[4 * 1024];
+
+        string title = inventory.getTitle();
+
+        short titleLength = (short)title.Length;
+        containerBuffer[offset] = (byte)((titleLength >> 0x8) & 0xFF); offset += 1;
+        containerBuffer[offset] = (byte)(titleLength & 0xFF); offset += 1;
+
+        for (int i = 0; i < titleLength; i++)
         {
-            var item = inventory._items[i];
-            buf[i * 3] = item?.getTypeId() ?? 0;
-            buf[i * 3 + 1] = item?.getAmount() ?? 0;
-            buf[i * 3 + 2] = item?.getDurability() ?? 0;
+            int c = char.ConvertToUtf32(title, i);
+            containerBuffer[offset] = (byte)((c >> 0x8) & 0xFF); offset += 1;
+            containerBuffer[offset] = (byte)(c & 0xFF); offset += 1;
         }
 
-        string title = inventory.getName();
-        int titleByteLen = System.Text.Encoding.UTF8.GetByteCount(title);
-        IntPtr titlePtr = Marshal.StringToCoTaskMemUTF8(title);
-        var gh = GCHandle.Alloc(buf, GCHandleType.Pinned);
+        for (int i = 0; i < inventory.getSize(); i++)
+        {
+            ItemStack.WriteToBuffer(inventory.getItem(i), containerBuffer, ref offset);
+        }
+
+        var gh = GCHandle.Alloc(containerBuffer, GCHandleType.Pinned);
+
         try
         {
-            NativeBridge.OpenVirtualContainer(getEntityId(), nativeType, titlePtr, titleByteLen, size, gh.AddrOfPinnedObject());
-        }
-        finally
+            NativeBridge.OpenVirtualContainer(getEntityId(), nativeType, inventory.getSize(), gh.AddrOfPinnedObject());
+        } finally
         {
             gh.Free();
-            Marshal.FreeCoTaskMem(titlePtr);
         }
 
         var view = new InventoryView(inventory, getInventory(), this, inventory.getType());

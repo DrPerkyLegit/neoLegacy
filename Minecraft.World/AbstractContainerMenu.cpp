@@ -258,20 +258,13 @@ shared_ptr<ItemInstance> AbstractContainerMenu::clicked(int slotIndex, int butto
 							bool dropAllowed = true;
 							if (carried != nullptr && carried->count > 0)
 							{
-								int outId = carried->id, outCount = carried->count, outAux = carried->getAuxValue();
-								if (FourKitBridge::FirePlayerDropItem(
-										player->entityId, carried->id, carried->count, carried->getAuxValue(),
-										&outId, &outCount, &outAux))
-										dropAllowed = false;
-									else
-									{
-										carried->id = outId;
-										carried->count = outCount;
-										carried->setAuxValue(outAux);
-										player->drop(carried);
-										inventory->setCarried(nullptr);
-										dropAllowed = false;
-									}
+								if (FourKitBridge::FirePlayerDropItem(player->entityId, carried)) {
+									dropAllowed = false;
+								} else {
+									player->drop(carried);
+									inventory->setCarried(nullptr);
+									dropAllowed = false;
+								}
 							}
 							if (dropAllowed)
 							{
@@ -291,21 +284,13 @@ shared_ptr<ItemInstance> AbstractContainerMenu::clicked(int slotIndex, int butto
 							bool dropAllowed = true;
 							if (carried != nullptr && carried->count > 0)
 							{
-								int outId = carried->id, outCount = 1, outAux = carried->getAuxValue();
-								if (FourKitBridge::FirePlayerDropItem(
-										player->entityId, carried->id, 1, carried->getAuxValue(),
-										&outId, &outCount, &outAux))
-										dropAllowed = false;
-									else
-									{
-										shared_ptr<ItemInstance> dropped = carried->remove(1);
-										if (carried->count == 0) inventory->setCarried(nullptr);
-										dropped->id = outId;
-										dropped->count = outCount;
-										dropped->setAuxValue(outAux);
-										player->drop(dropped);
-										dropAllowed = false;
-									}
+								if (FourKitBridge::FirePlayerDropItem(player->entityId, carried)) {
+									dropAllowed = false;
+								} else {
+									player->drop(carried->remove(1));
+									inventory->setCarried(nullptr);
+									dropAllowed = false;
+								}
 							}
 							if (dropAllowed)
 							{
@@ -545,18 +530,18 @@ shared_ptr<ItemInstance> AbstractContainerMenu::clicked(int slotIndex, int butto
 			bool dropAllowed = true;
 			if (slotItem != nullptr && slotItem->count > 0)
 			{
-				int outId = slotItem->id, outCount = dropCount, outAux = slotItem->getAuxValue();
-				if (FourKitBridge::FirePlayerDropItem(
-					player->entityId, slotItem->id, dropCount, slotItem->getAuxValue(),
-					&outId, &outCount, &outAux))
+				if (FourKitBridge::FirePlayerDropItem(player->entityId, slotItem)) {
 					dropAllowed = false;
+				}
 				else
 				{
 					shared_ptr<ItemInstance> item = slot->remove(dropCount);
 					slot->onTake(player, item);
-					item->id = outId;
-					item->count = outCount;
-					item->setAuxValue(outAux);
+					item->id = slotItem->id;
+					item->count = slotItem->count;
+					item->setRawAuxValue(slotItem->getAuxValue());
+					item->tag = slotItem->tag;
+
 					player->drop(item);
 					dropAllowed = false;
 				}

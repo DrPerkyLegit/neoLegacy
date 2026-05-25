@@ -73,7 +73,7 @@ internal static class NativeBridge
     internal delegate int NativeSetSpawnLocationDelegate(int dimId, int x, int y, int z);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void NativeDropItemDelegate(int dimId, double x, double y, double z, int itemId, int count, int auxValue, int naturally);
+    internal delegate void NativeDropItemDelegate(int dimId, double x, double y, double z, IntPtr itemData, int naturally);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeKickPlayerDelegate(int entityId, int reason);
@@ -97,13 +97,13 @@ internal static class NativeBridge
     internal delegate void NativeGetPlayerInventoryDelegate(int entityId, IntPtr outBuffer);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void NativeSetPlayerInventorySlotDelegate(int entityId, int slot, int itemId, int count, int aux);
+    internal delegate void NativeSetPlayerInventorySlotDelegate(int entityId, int slot, IntPtr itemData);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeGetContainerContentsDelegate(int entityId, IntPtr outBuffer, int maxSlots);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void NativeSetContainerSlotDelegate(int entityId, int slot, int itemId, int count, int aux);
+    internal delegate void NativeSetContainerSlotDelegate(int entityId, int slot, IntPtr itemData);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeGetContainerViewerEntityIdsDelegate(int entityId, IntPtr outIds, int maxCount, IntPtr outCount);
@@ -112,13 +112,13 @@ internal static class NativeBridge
     internal delegate void NativeCloseContainerDelegate(int entityId);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void NativeOpenVirtualContainerDelegate(int entityId, int nativeType, IntPtr titleUtf8, int titleByteLen, int slotCount, IntPtr itemsBuf);
+    internal delegate void NativeOpenVirtualContainerDelegate(int entityId, int nativeType, int slotCount, IntPtr itemsBuf);
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate int NativeGetItemMetaDelegate(int entityId, int slot, IntPtr outBuf, int bufSize);
+    //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    //internal delegate int NativeGetItemMetaDelegate(int entityId, int slot, IntPtr outBuf, int bufSize);
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    internal delegate void NativeSetItemMetaDelegate(int entityId, int slot, IntPtr inBuf, int bufSize);
+    //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    //internal delegate void NativeSetItemMetaDelegate(int entityId, int slot, IntPtr inBuf, int bufSize);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeSetHeldItemSlotDelegate(int entityId, int slot);
@@ -282,8 +282,8 @@ internal static class NativeBridge
     internal static NativeGetContainerViewerEntityIdsDelegate? GetContainerViewerEntityIds;
     internal static NativeCloseContainerDelegate? CloseContainer;
     internal static NativeOpenVirtualContainerDelegate? OpenVirtualContainer;
-    internal static NativeGetItemMetaDelegate? GetItemMeta;
-    internal static NativeSetItemMetaDelegate? SetItemMeta;
+    //internal static NativeGetItemMetaDelegate? GetItemMeta;
+    //internal static NativeSetItemMetaDelegate? SetItemMeta;
     internal static NativeSetHeldItemSlotDelegate? SetHeldItemSlot;
     internal static NativeGetCarriedItemDelegate? GetCarriedItem;
     internal static NativeSetCarriedItemDelegate? SetCarriedItem;
@@ -369,7 +369,7 @@ internal static class NativeBridge
         SendRaw = Marshal.GetDelegateForFunctionPointer<NativeSendRawDelegate>(sendRaw);
     }
 
-    internal static void SetInventoryCallbacks(IntPtr getPlayerInventory, IntPtr setPlayerInventorySlot, IntPtr getContainerContents, IntPtr setContainerSlot, IntPtr getContainerViewerEntityIds, IntPtr closeContainer, IntPtr openVirtualContainer, IntPtr getItemMeta, IntPtr setItemMeta, IntPtr setHeldItemSlot, IntPtr getCarriedItem, IntPtr setCarriedItem, IntPtr getEnderChestContents, IntPtr setEnderChestSlot)
+    internal static void SetInventoryCallbacks(IntPtr getPlayerInventory, IntPtr setPlayerInventorySlot, IntPtr getContainerContents, IntPtr setContainerSlot, IntPtr getContainerViewerEntityIds, IntPtr closeContainer, IntPtr openVirtualContainer, IntPtr setHeldItemSlot, IntPtr getCarriedItem, IntPtr setCarriedItem, IntPtr getEnderChestContents, IntPtr setEnderChestSlot)
     {
         GetPlayerInventory = Marshal.GetDelegateForFunctionPointer<NativeGetPlayerInventoryDelegate>(getPlayerInventory);
         SetPlayerInventorySlot = Marshal.GetDelegateForFunctionPointer<NativeSetPlayerInventorySlotDelegate>(setPlayerInventorySlot);
@@ -378,8 +378,6 @@ internal static class NativeBridge
         GetContainerViewerEntityIds = Marshal.GetDelegateForFunctionPointer<NativeGetContainerViewerEntityIdsDelegate>(getContainerViewerEntityIds);
         CloseContainer = Marshal.GetDelegateForFunctionPointer<NativeCloseContainerDelegate>(closeContainer);
         OpenVirtualContainer = Marshal.GetDelegateForFunctionPointer<NativeOpenVirtualContainerDelegate>(openVirtualContainer);
-        GetItemMeta = Marshal.GetDelegateForFunctionPointer<NativeGetItemMetaDelegate>(getItemMeta);
-        SetItemMeta = Marshal.GetDelegateForFunctionPointer<NativeSetItemMetaDelegate>(setItemMeta);
         SetHeldItemSlot = Marshal.GetDelegateForFunctionPointer<NativeSetHeldItemSlotDelegate>(setHeldItemSlot);
         GetCarriedItem = Marshal.GetDelegateForFunctionPointer<NativeGetCarriedItemDelegate>(getCarriedItem);
         SetCarriedItem = Marshal.GetDelegateForFunctionPointer<NativeSetCarriedItemDelegate>(setCarriedItem);

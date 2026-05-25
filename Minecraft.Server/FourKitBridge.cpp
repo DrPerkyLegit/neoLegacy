@@ -59,10 +59,8 @@ typedef int(__stdcall *fn_fire_player_death)(int entityId,
                                              int *outNewExp, int *outNewLevel, int *outKeepLevel);
 typedef void(__stdcall *fn_set_player_callbacks)(void *kickPlayer, void *banPlayer, void *banPlayerIp, void *getPlayerAddress, void *getPlayerLatency);
 typedef void(__stdcall *fn_set_player_connection_callbacks)(void *sendRaw);
-typedef long long(__stdcall *fn_fire_player_drop_item)(int entityId,
-                                                       int itemId, int itemCount, int itemAux,
-                                                       int *outItemId, int *outItemCount, int *outItemAux);
-typedef void(__stdcall *fn_set_inventory_callbacks)(void *getPlayerInventory, void *setPlayerInventorySlot, void *getContainerContents, void *setContainerSlot, void *getContainerViewerEntityIds, void *closeContainer, void *openVirtualContainer, void *getItemMeta, void *setItemMeta, void *setHeldItemSlot, void *getCarriedItem, void *setCarriedItem, void *getEnderChestContents, void *setEnderChestSlot);
+typedef int(__stdcall *fn_fire_player_drop_item)(int entityId, unsigned char* itemData);
+typedef void(__stdcall *fn_set_inventory_callbacks)(void *getPlayerInventory, void *setPlayerInventorySlot, void *getContainerContents, void *setContainerSlot, void *getContainerViewerEntityIds, void *closeContainer, void *openVirtualContainer, void *setHeldItemSlot, void *getCarriedItem, void *setCarriedItem, void *getEnderChestContents, void *setEnderChestSlot);
 typedef int(__stdcall *fn_fire_player_interact)(int entityId, int action,
                                                 int itemId, int itemCount, int itemAux,
                                                 int clickedX, int clickedY, int clickedZ,
@@ -326,8 +324,6 @@ void Initialize()
         (void *)&NativeGetContainerViewerEntityIds,
         (void *)&NativeCloseContainer,
         (void *)&NativeOpenVirtualContainer,
-        (void *)&NativeGetItemMeta,
-        (void *)&NativeSetItemMeta,
         (void *)&NativeSetHeldItemSlot,
         (void *)&NativeGetCarriedItem,
         (void *)&NativeSetCarriedItem,
@@ -753,25 +749,24 @@ int FirePlayerDeath(int entityId, const std::wstring &deathMessage, int exp,
     return outExp;
 }
 
-bool FirePlayerDropItem(int entityId, int itemId, int itemCount, int itemAux,
-                        int *outItemId, int *outItemCount, int *outItemAux)
+bool FirePlayerDropItem(int entityId, std::shared_ptr<ItemInstance> item)
 {
-    *outItemId = itemId;
-    *outItemCount = itemCount;
-    *outItemAux = itemAux;
-
     if (!s_initialized || !s_managedFirePlayerDropItem)
     {
         return false;
     }
+    unsigned char itemBuffer[512] = {};
+    {
+        int offset = 0;
+        Transformation_WriteItemToBuffer(item, itemBuffer, offset);
+    }
+    
+    int result = s_managedFirePlayerDropItem(entityId, itemBuffer);
 
-    int newId = itemId, newCount = itemCount, newAux = itemAux;
-    long long result = s_managedFirePlayerDropItem(entityId, itemId, itemCount, itemAux,
-                                                   &newId, &newCount, &newAux);
-
-    *outItemId = newId;
-    *outItemCount = newCount;
-    *outItemAux = newAux;
+    {
+        int offset = 0;
+        Transformation_ReadItemFromBuffer(item, itemBuffer, offset);
+    }
 
     return result != 0;
 }

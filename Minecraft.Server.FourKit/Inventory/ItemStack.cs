@@ -151,4 +151,55 @@ public class ItemStack
         if (_ownerInventory != null && _ownerSlot >= 0)
             _ownerInventory.setItem(_ownerSlot, this);
     }
+
+    internal static ItemStack? ReadFromBuffer(byte[] buffer, ref int offset)
+    {
+        byte isItemNull = buffer[offset]; offset += 1;
+
+        if (isItemNull == 0)
+        {
+            short itemId = BitConverter.ToInt16(buffer, offset); offset += 2;
+            byte itemAmount = buffer[offset]; offset += 1;
+            short itemAux = BitConverter.ToInt16(buffer, offset); offset += 2;
+
+            ItemStack item = new ItemStack((int)itemId, (int)itemAmount, itemAux);
+            item.setItemMetaInternal(ItemMeta.ReadFromBuffer(buffer, ref offset));
+
+            return item;
+        }
+
+        return null;
+    }
+
+    internal static void WriteToBuffer(ItemStack? item, byte[] buffer, ref int offset)
+    {
+        if (item == null)
+        {
+            buffer[offset] = 0;
+            offset += 1;
+        }
+        else
+        {
+            buffer[offset] = (byte)(item._type == Material.AIR ? 1 : 0);
+            offset += 1;
+
+            if (item._type != Material.AIR)
+            {
+                buffer[offset] = (byte)(((int)item._type >> 0x8) & 0xFF);
+                offset += 1;
+                buffer[offset] = (byte)((int)item._type & 0xFF);
+                offset += 1;
+
+                buffer[offset] = (byte)item._amount;
+                offset += 1;
+
+                buffer[offset] = (byte)((item._durability >> 0x8) & 0xFF);
+                offset += 1;
+                buffer[offset] = (byte)(item._durability & 0xFF);
+                offset += 1;
+
+                ItemMeta.WriteToBuffer(item._meta, buffer, ref offset);
+            }
+        }
+    }
 }

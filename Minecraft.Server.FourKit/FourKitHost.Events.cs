@@ -579,41 +579,47 @@ public static partial class FourKitHost
     }
 
     [UnmanagedCallersOnly]
-    public static long FirePlayerDropItem(int entityId, int itemId, int itemCount, int itemAux,
-        IntPtr outItemIdPtr, IntPtr outItemCountPtr, IntPtr outItemAuxPtr)
+    public static int FirePlayerDropItem(int entityId, IntPtr itemData)
     {
         try
         {
             var player = FourKit.GetPlayerByEntityId(entityId);
             if (player == null)
             {
-                Marshal.WriteInt32(outItemIdPtr, itemId);
-                Marshal.WriteInt32(outItemCountPtr, itemCount);
-                Marshal.WriteInt32(outItemAuxPtr, itemAux);
                 return 0;
             }
 
             SyncPlayerFromNative(player);
 
-            Material mat = Enum.IsDefined(typeof(Material), itemId) ? (Material)itemId : Material.AIR;
-            var itemStack = new ItemStack(mat, itemCount, (short)itemAux);
+            byte[] dataBuffer = new byte[512];
+            Marshal.Copy(itemData, dataBuffer, 0, 512);
 
-            var evt = new PlayerDropItemEvent(player, itemStack);
+            int offset = 0;
+            ItemStack? item = ItemStack.ReadFromBuffer(dataBuffer, ref offset);
+
+            if (item == null)
+            {
+                item = new ItemStack(Material.AIR, 0, 0);
+            }
+
+            var evt = new PlayerDropItemEvent(player, item);
             FourKit.FireEvent(evt);
 
             var result = evt.getItemDrop();
-            Marshal.WriteInt32(outItemIdPtr, result.getTypeId());
-            Marshal.WriteInt32(outItemCountPtr, result.getAmount());
-            Marshal.WriteInt32(outItemAuxPtr, result.getDurability());
+            {
+                byte[] resultDataBuffer = new byte[512];
+                int resultOffset = 0;
+
+                ItemStack.WriteToBuffer(evt.getItemDrop(), resultDataBuffer, ref resultOffset);
+
+                Marshal.Copy(resultDataBuffer, 0, itemData, 512);
+            }
 
             return evt.isCancelled() ? 1 : 0;
         }
         catch (Exception ex)
         {
             ServerLog.Error("fourkit", $"FirePlayerDropItem error: {ex}");
-            Marshal.WriteInt32(outItemIdPtr, itemId);
-            Marshal.WriteInt32(outItemCountPtr, itemCount);
-            Marshal.WriteInt32(outItemAuxPtr, itemAux);
             return 0;
         }
     }

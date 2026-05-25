@@ -171,4 +171,167 @@ public class ItemMeta
     {
         return _displayName == null && (_lore == null || _lore.Count == 0) && (_enchants == null || _enchants.Count == 0);
     }
+
+    internal static ItemMeta? ReadFromBuffer(byte[] buffer, ref int offset)
+    {
+        byte isMetadataEmpty = buffer[offset]; offset++;
+
+        if (isMetadataEmpty == 0)
+        {
+            ItemMeta meta = new ItemMeta();
+
+            byte metadataFlags = buffer[offset];
+            offset++;
+            if ((metadataFlags & 0x1) != 0)
+            {
+                short displayNameLength = BitConverter.ToInt16(buffer, offset);
+                offset += 2;
+
+                string displayName = "";
+                for (int i = 0; i < displayNameLength; i++)
+                {
+                    ushort charCode = BitConverter.ToUInt16(buffer, offset);
+                    offset += 2;
+
+                    displayName += char.ConvertFromUtf32(charCode);
+                }
+                meta.setDisplayName(displayName);
+            }
+            if ((metadataFlags & 0x2) != 0) // has lore
+            {
+                byte loreCount = buffer[offset];
+                offset += 1;
+                List<string> lore = new List<string>();
+                for (int i = 0; i < loreCount; i++)
+                {
+                    string loreString = "";
+                    short loreLineLength = BitConverter.ToInt16(buffer, offset); offset += 2;
+                    for (int j = 0; j < loreLineLength; j++)
+                    {
+                        ushort charCode = BitConverter.ToUInt16(buffer, offset);
+                        offset += 2;
+
+                        loreString += char.ConvertFromUtf32(charCode);
+                    }
+                    lore.Add(loreString);
+                }
+                meta.setLore(lore);
+            }
+            if ((metadataFlags & 0x4) != 0) // has enchantments
+            {
+                byte enchantmentCount = buffer[offset];
+                offset += 1;
+                Dictionary<EnchantmentType, int> enchants = new Dictionary<EnchantmentType, int>();
+                for (int i = 0; i < enchantmentCount; i++)
+                {
+                    EnchantmentType enchantmentType = (EnchantmentType)BitConverter.ToInt16(buffer, offset);
+                    offset += 2;
+                    short enchantmentLevel = BitConverter.ToInt16(buffer, offset);
+                    offset += 2;
+                    enchants.Add(enchantmentType, enchantmentLevel);
+                }
+                meta.setEnchants(enchants);
+            }
+
+            return meta;
+        }
+
+        return null;
+    }
+
+    internal static void WriteToBuffer(ItemMeta? meta, byte[] buffer, ref int offset)
+    {
+        if (meta == null || meta.isEmpty())
+        {
+            buffer[offset] = 1; offset += 1;
+        }
+        else
+        {
+            buffer[offset] = 0; offset += 1;
+
+            bool hasDisplayName = meta._displayName != null && meta._displayName.Length > 0;
+            bool hasLore = meta._lore != null && meta._lore.Count > 0;
+            bool hasEnchants = meta._enchants != null && meta._enchants.Count > 0;
+
+            if (hasDisplayName || hasLore || hasEnchants)
+            {
+                int metadataFlagsOffset = offset;
+                buffer[metadataFlagsOffset] = 0;
+                offset += 1;
+
+                if (hasDisplayName)
+                {
+                    buffer[metadataFlagsOffset] |= 0x1;
+
+                    buffer[offset] = (byte)((meta._displayName.Length >> 0x8) & 0xFF);
+                    offset += 1;
+                    buffer[offset] = (byte)(meta._displayName.Length & 0xFF);
+                    offset += 1;
+
+                    for (int i = 0; i < meta._displayName.Length; i++)
+                    {
+                        int charCode = char.ConvertToUtf32(meta._displayName, i);
+                        buffer[offset] = (byte)((charCode >> 0x8) & 0xFF);
+                        offset += 1;
+                        buffer[offset] = (byte)(charCode & 0xFF);
+                        offset += 1;
+                    }
+                }
+
+                if (hasLore)
+                {
+                    buffer[metadataFlagsOffset] |= 0x2;
+
+                    byte loreCount = (byte)(meta._lore.Count & 0xFF);
+                    buffer[offset] = loreCount;
+                    offset += 1;
+
+                    for (int i = 0; i < loreCount; i++)
+                    {
+                        string loreString = meta._lore[i];
+                        short loreLineLength = (short)loreString.Length;
+                        buffer[offset] = (byte)((loreLineLength >> 0x8) & 0xFF);
+                        offset += 1;
+                        buffer[offset] = (byte)(loreLineLength & 0xFF);
+                        offset += 1;
+
+                        for (int j = 0; j < loreLineLength; j++)
+                        {
+                            int charCode = char.ConvertToUtf32(loreString, j);
+                            buffer[offset] = (byte)((charCode >> 0x8) & 0xFF);
+                            offset += 1;
+                            buffer[offset] = (byte)(charCode & 0xFF);
+                            offset += 1;
+                        }
+                    }
+                }
+
+                if (hasEnchants)
+                {
+                    buffer[metadataFlagsOffset] |= 0x4;
+
+                    byte enchantmentCount = (byte)(meta._enchants.Count & 0xFF);
+                    buffer[offset] = enchantmentCount;
+                    offset += 1;
+
+                    for (int i = 0; i < enchantmentCount; i++)
+                    {
+                        KeyValuePair<EnchantmentType, int> enchantment = meta._enchants.ElementAt(i);
+                        short enchantmentType = (short)enchantment.Key;
+                        short enchantmentLevel = (short)enchantment.Value;
+
+                        buffer[offset] = (byte)((enchantmentType >> 0x8) & 0xFF);
+                        offset += 1;
+                        buffer[offset] = (byte)(enchantmentType & 0xFF);
+                        offset += 1;
+
+                        buffer[offset] = (byte)((enchantmentLevel >> 0x8) & 0xFF);
+                        offset += 1;
+                        buffer[offset] = (byte)(enchantmentLevel & 0xFF);
+                        offset += 1;
+                    }
+                }
+            }
+        }
+    }
 }

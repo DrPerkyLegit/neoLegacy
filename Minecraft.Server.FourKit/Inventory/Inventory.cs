@@ -17,11 +17,17 @@ public class Inventory : IEnumerable<ItemStack>
     internal readonly ItemStack?[] _items;
     private readonly int _nativeEntityId = -1;
 
+    private byte[] _itemBuffer;
+    private GCHandle _itemBufferHandle;
+
     internal Inventory(string name, InventoryType type, int size)
     {
         _name = name;
         _type = type;
         _items = new ItemStack?[size];
+
+        _itemBuffer = new byte[8 * 1024];
+        _itemBufferHandle = GCHandle.Alloc(_itemBuffer, GCHandleType.Pinned);
     }
 
     internal Inventory(string name, InventoryType type, int size, int entityId)
@@ -35,47 +41,14 @@ public class Inventory : IEnumerable<ItemStack>
         if (_nativeEntityId < 0 || NativeBridge.GetContainerContents == null)
             return;
 
-        int[] buf = new int[_items.Length * 3];
-        var gh = GCHandle.Alloc(buf, GCHandleType.Pinned);
-        try
-        {
-            NativeBridge.GetContainerContents(_nativeEntityId, gh.AddrOfPinnedObject(), _items.Length);
-        }
-        finally
-        {
-            gh.Free();
-        }
+        NativeBridge.GetContainerContents(_nativeEntityId, _itemBufferHandle.AddrOfPinnedObject(), _items.Length);
 
+        int offset = 0;
         for (int i = 0; i < _items.Length; i++)
         {
-            int id = buf[i * 3 + 0];
-            int aux = buf[i * 3 + 1];
-            int packed = buf[i * 3 + 2];
-
-            ushort count = (ushort)((packed >> 8) & 0xFFFF);
-
-            //byte flags = (byte)((packed >> 24) & 0xFF);
-            //bool hasMetadata = (flags & 0x1) != 0; //unused here
-
             _items[i]?.UnbindFromInventory();
-            if (id > 0 && count > 0)
-            {
-                if (_items[i] == null)
-                {
-                    _items[i] = new ItemStack(id, count, (short)aux);
-                }
-                else
-                {
-                    _items[i]!.setTypeId(id);
-                    _items[i]!.setAmount(count);
-                    _items[i]!.setDurability((short)aux);
-                }
-                _items[i]!.BindToInventory(this, i); //should we unbind and rebind or just keep the bind?
-            }
-            else
-            {
-                _items[i] = null;
-            }
+            _items[i] = ItemStack.ReadFromBuffer(_itemBuffer, ref offset);
+            _items[i]?.BindToInventory(this, i); //should we unbind and rebind or just keep the bind?
         }
     }
 
@@ -124,12 +97,24 @@ public class Inventory : IEnumerable<ItemStack>
             _slotModifiedByPlugin = true;
         }
 
+
         if (_nativeEntityId >= 0 && NativeBridge.SetContainerSlot != null && index >= 0 && index < _items.Length)
         {
-            int id = item?.getTypeId() ?? 0;
-            int count = item?.getAmount() ?? 0;
-            int aux = item?.getDurability() ?? 0;
-            NativeBridge.SetContainerSlot(_nativeEntityId, index, id, count, aux);
+
+            byte[] singleItemBuffer = new byte[512]; //about half a kb of memory
+            GCHandle singleItemBufferHandle = GCHandle.Alloc(singleItemBuffer, GCHandleType.Pinned);
+
+            try
+            {
+                int offset = 0;
+                ItemStack.WriteToBuffer(item, singleItemBuffer, ref offset);
+
+                NativeBridge.SetContainerSlot(_nativeEntityId, index, singleItemBufferHandle.AddrOfPinnedObject());
+            }
+            finally
+            {
+                singleItemBufferHandle.Free();
+            }
         }
     }
 

@@ -453,15 +453,16 @@ int __cdecl NativeSetSpawnLocation(int dimId, int x, int y, int z)
     return 1;
 }
 
-void __cdecl NativeDropItem(int dimId, double x, double y, double z, int itemId, int count, int auxValue, int naturally)
+void __cdecl NativeDropItem(int dimId, double x, double y, double z, unsigned char* itemData, int naturally)
 {
     ServerLevel *level = GetLevel(dimId);
     if (!level)
         return;
-    if (itemId <= 0 || count <= 0)
-        return;
+    
+    int offset = 0;
+    auto itemInstance = Transformation_ReadItemFromBuffer(itemData, offset);
+    if (itemInstance == nullptr) return;
 
-    auto itemInstance = std::make_shared<ItemInstance>(itemId, count, auxValue);
     double spawnX = x, spawnY = y, spawnZ = z;
     if (naturally)
     {
@@ -658,42 +659,192 @@ int __cdecl NativeSendRaw(int entityId, unsigned char *bufferData, int bufferSiz
     player->connection->connection->send(bufferData, bufferSize);
 }
 
-void WriteInventoryItemData(std::shared_ptr<ItemInstance> item, int index, int* outBuffer) {
-    if (item) {
-        //ItemFlags Key:
-        // 0x1 = hasMetadata (has data that needs to be gotten from "ReadMetaFromNative")
+void Transformation_WriteItemMetaToBuffer(std::shared_ptr<ItemInstance> item, unsigned char* outBuffer, int& offset) {
+    bool hasItemTag =  ((item != nullptr) && (item->tag != nullptr));
+    outBuffer[offset] = !hasItemTag; offset += 1;
 
-        uint8_t itemFlags = 0;
-        if (item->getTag() == nullptr) goto doneWithMetadataFlag;
-        CompoundTag* itemTag = item->getTag();
 
-        if (itemTag->contains(L"ench")) {
-            itemFlags |= 0x1;
-            goto doneWithMetadataFlag;
-        }
-        else { //we just want to check one tag for metadata and return for this flag, not all of them
-            CompoundTag* displayTag = itemTag->getCompound(L"display");
-            if (displayTag->contains(L"Name") || displayTag->contains(L"Lore")) {
-                itemFlags |= 0x1;
-                goto doneWithMetadataFlag;
+    if (hasItemTag) {
+        int metadataFlagsOffset = offset;
+        outBuffer[metadataFlagsOffset] = 0; offset += 1;
+
+        if (item->hasCustomHoverName()) {
+            outBuffer[metadataFlagsOffset] |= 0x1;
+            wstring customName = item->getHoverName();
+
+            outBuffer[offset] = ((customName.size() >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (customName.size() & 0xFF); offset += 1;
+
+            for (wchar_t c : customName) {
+                outBuffer[offset] = ((c >> 8) & 0xFF); offset += 1;
+                outBuffer[offset] = (c & 0xFF); offset += 1;
             }
         }
 
+        CompoundTag* displayTag = item->getTag()->getCompound(L"display");
 
-    doneWithMetadataFlag:
+        if (displayTag && displayTag->contains(L"Lore")) {
+            outBuffer[metadataFlagsOffset] |= 0x2;
+            ListTag<Tag>* loreList = displayTag->getList(L"Lore");
 
-        outBuffer[(index * 3) + 0] = item->id;
-        outBuffer[(index * 3) + 1] = item->getAuxValue();
-        outBuffer[(index * 3) + 2] = (((int)itemFlags << 24) | ((int)item->count << 8));
+            unsigned char loreCount = ((int)loreList->size()) & 0xFF;
+            outBuffer[offset] = loreCount; offset += 1;
+
+            for (int i = 0; i < loreCount; i++) {
+                StringTag* tag = (StringTag*)loreList->get(i);
+                wstring loreString = tag->data;
+                short loreStringLength = loreString.size();
+
+                outBuffer[offset] = ((loreStringLength >> 8) & 0xFF); offset += 1;
+                outBuffer[offset] = (loreStringLength & 0xFF); offset += 1;
+
+                for (wchar_t c : loreString) {
+                    outBuffer[offset] = ((c >> 8) & 0xFF); offset += 1;
+                    outBuffer[offset] = (c & 0xFF); offset += 1;
+                }
+            }
+        }
+
+        if (item->isEnchanted()) {
+            outBuffer[metadataFlagsOffset] |= 0x4;
+            ListTag<CompoundTag>* enchantmentTags = item->getEnchantmentTags();
+
+            unsigned char enchantmentCount = ((int)enchantmentTags->size()) & 0xFF;
+            outBuffer[offset] = enchantmentCount; offset += 1;
+
+            for (int i = 0; i < enchantmentCount; i++) {
+                CompoundTag* enchantment = enchantmentTags->get(i);
+                short enchantmentId = enchantment->getShort(ItemInstance::TAG_ENCH_ID);
+                short enchantmentLevel = enchantment->getShort(ItemInstance::TAG_ENCH_LEVEL);
+
+                outBuffer[offset] = ((enchantmentId >> 8) & 0xFF); offset += 1;
+                outBuffer[offset] = (enchantmentId & 0xFF); offset += 1;
+
+                outBuffer[offset] = ((enchantmentLevel >> 8) & 0xFF); offset += 1;
+                outBuffer[offset] = (enchantmentLevel & 0xFF); offset += 1;
+            }
+
+        }
+        
     }
 }
 
-void __cdecl NativeGetPlayerInventory(int entityId, int *outData)
+void Transformation_ReadItemMetaFromBuffer(ItemInstance* item, unsigned char* itemData, int& offset) {
+    unsigned char isTagNull = itemData[offset]; offset += 1;
+
+    if (isTagNull == 0) {
+        if (item->tag == nullptr) item->tag = new CompoundTag();
+        uint8_t metadataFlags = itemData[offset]; offset += 1;
+
+        if (metadataFlags & 0x1) {
+            uint16_t customNameLength = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+            wstring customName;
+            for (int i = 0; i < customNameLength; i++) {
+                wchar_t c = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+                customName.push_back(c);
+            }
+            item->setHoverName(customName);
+        }
+
+        if (metadataFlags & 0x2) {
+            ListTag<Tag>* loreList = new ListTag<Tag>(L"Lore");
+
+            uint8_t loreCount = itemData[offset]; offset += 1;
+            for (int i = 0; i < loreCount; i++) {
+                uint16_t loreStringLength = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+                wstring loreString;
+                for (int j = 0; j < loreStringLength; j++) {
+                    wchar_t c = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+                    loreString.push_back(c);
+                }
+                loreList->add(new StringTag(loreString));
+            }
+            if (item->tag->getCompound(L"display") == nullptr) {
+                item->tag->putCompound(L"display", new CompoundTag());
+            }
+            
+            item->tag->getCompound(L"display")->put(L"Lore", loreList);
+        }
+
+        if (metadataFlags & 0x4) {
+            ListTag<CompoundTag>* enchantmentTags = new ListTag<CompoundTag>(L"ench");
+
+            uint8_t enchantmentCount = itemData[offset]; offset += 1;
+            for (int i = 0; i < enchantmentCount; i++) {
+                uint16_t enchantmentId = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+                uint16_t enchantmentLevel = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+                CompoundTag* enchantmentTag = new CompoundTag();
+                enchantmentTag->putShort(ItemInstance::TAG_ENCH_ID, enchantmentId);
+                enchantmentTag->putShort(ItemInstance::TAG_ENCH_LEVEL, enchantmentLevel);
+                enchantmentTags->add(enchantmentTag);
+            }
+
+            item->tag->put(L"ench", enchantmentTags);
+        }
+
+    }
+}
+
+void Transformation_WriteItemToBuffer(std::shared_ptr<ItemInstance> item, unsigned char* outBuffer, int& offset) {
+    outBuffer[offset] = (item == nullptr); offset += 1;
+    
+    if (item != nullptr) {
+
+        int itemId = item->id;
+        int itemCount = item->count;
+        int aux = item->getAuxValue();
+
+
+        outBuffer[offset] = ((itemId >> 8) & 0xFF); offset += 1;
+        outBuffer[offset] = (itemId & 0xFF); offset += 1;
+
+        outBuffer[offset] = itemCount; offset += 1;
+
+        outBuffer[offset] = ((aux >> 8) & 0xFF); offset += 1;
+        outBuffer[offset] = (aux & 0xFF); offset += 1;
+
+        Transformation_WriteItemMetaToBuffer(item, outBuffer, offset);
+    }
+}
+
+std::shared_ptr<ItemInstance> Transformation_ReadItemFromBuffer(unsigned char* itemData, int& offset) {
+    unsigned char isItemNull = itemData[offset]; offset += 1;
+
+    if (isItemNull == 0) {
+        int itemId = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+        int itemCount = itemData[offset]; offset += 1;
+        int aux = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+
+        std::shared_ptr<ItemInstance> item = std::make_shared<ItemInstance>(itemId, itemCount, aux);
+        item->setRawAuxValue(aux); //allow plugins to do whatever they want with aux
+
+        Transformation_ReadItemMetaFromBuffer(item.get(), itemData, offset);
+
+        return item;
+    }
+
+    return nullptr;
+}
+
+void Transformation_ReadItemFromBuffer(std::shared_ptr<ItemInstance> item, unsigned char* itemData, int& offset) {
+    unsigned char isItemNull = itemData[offset]; offset += 1;
+
+    if (isItemNull == 0) {
+        int itemId = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+        int itemCount = itemData[offset]; offset += 1;
+        int aux = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+
+        item->id = itemId;
+        item->count = itemCount;
+        item->setRawAuxValue(aux); //allow plugins to do whatever they want with aux
+
+        Transformation_ReadItemMetaFromBuffer(item.get(), itemData, offset);
+    }
+}
+
+void __cdecl NativeGetPlayerInventory(int entityId, unsigned char *outData)
 {
-    // 9 slots per row, 3 slots in the inventory and the hotbar, 4 armor slots, 1 hand slot
-    // (((slotsPerRow * Rows) + ArmorSlots) * AmountOfIntsPerSlot) + hand slot
-    // (((9 * 4) + 4) * 3) + 1 = 121
-    memset(outData, 0, 121 * sizeof(int));
+    memset(outData, 0, (4*1024) * sizeof(unsigned char)); //todo: should we be clearing this every call?
 
     auto player = FindPlayer(entityId);
     if (!player || !player->inventory)
@@ -703,29 +854,28 @@ void __cdecl NativeGetPlayerInventory(int entityId, int *outData)
     if (size > 40)
         size = 40;
 
-    for (unsigned int i = 0; i < size; i++)
-    {
-        WriteInventoryItemData(player->inventory->getItem(i), i, outData);
-    }
+    int offset = 0;
+    outData[offset] = player->inventory->selected; offset += 1;
 
-    outData[120] = player->inventory->selected;
+    for (int i = 0; i < size; i++)
+    {
+        Transformation_WriteItemToBuffer(player->inventory->getItem(i), outData, offset);
+    }
 }
 
-void __cdecl NativeSetPlayerInventorySlot(int entityId, int slot, int itemId, int count, int aux)
+void __cdecl NativeSetPlayerInventorySlot(int entityId, int slot, unsigned char* itemData)
 {
     auto player = FindPlayer(entityId);
     if (!player || !player->inventory)
         return;
 
-    if (itemId <= 0 || count <= 0)
-        player->inventory->setItem(slot, nullptr);
-    else
-        player->inventory->setItem(slot, std::make_shared<ItemInstance>(itemId, count, aux));
+    int offset = 0;
+    player->inventory->setItem(slot, Transformation_ReadItemFromBuffer(itemData, offset));
 }
 
-void __cdecl NativeGetContainerContents(int entityId, int *outData, int maxSlots)
+void __cdecl NativeGetContainerContents(int entityId, unsigned char *outData, int maxSlots)
 {
-    memset(outData, 0, maxSlots * 3 * sizeof(int));
+    memset(outData, 0, (4*1024) * sizeof(unsigned char));
 
     auto player = FindPlayer(entityId);
     if (!player || !player->containerMenu || player->containerMenu == player->inventoryMenu)
@@ -737,14 +887,15 @@ void __cdecl NativeGetContainerContents(int entityId, int *outData, int maxSlots
     if (count > maxSlots)
         count = maxSlots;
 
+    int offset = 0;
     for (int i = 0; i < count; i++)
     {
-        WriteInventoryItemData((*items)[i], i, outData);
+        Transformation_WriteItemToBuffer((*items)[i], outData, offset);
     }
     delete items;
 }
 
-void __cdecl NativeSetContainerSlot(int entityId, int slot, int itemId, int count, int aux)
+void __cdecl NativeSetContainerSlot(int entityId, int slot, unsigned char* itemData)
 {
     auto player = FindPlayer(entityId);
     if (!player || !player->containerMenu || player->containerMenu == player->inventoryMenu)
@@ -754,10 +905,8 @@ void __cdecl NativeSetContainerSlot(int entityId, int slot, int itemId, int coun
     if (slot < 0 || slot >= (int)menu->slots.size())
         return;
 
-    if (itemId <= 0 || count <= 0)
-        menu->setItem(slot, nullptr);
-    else
-        menu->setItem(slot, std::make_shared<ItemInstance>(itemId, count, aux));
+    int offset = 0;
+    menu->setItem(slot, Transformation_ReadItemFromBuffer(itemData, offset));
 
     menu->broadcastChanges();
 }
@@ -810,7 +959,7 @@ void __cdecl NativeCloseContainer(int entityId)
         player->closeContainer();
 }
 
-void __cdecl NativeOpenVirtualContainer(int entityId, int nativeType, const char *titleUtf8, int titleByteLen, int slotCount, int *itemsBuf)
+void __cdecl NativeOpenVirtualContainer(int entityId, int nativeType, int slotCount, unsigned char *containerBuffer)
 {
     auto player = FindPlayer(entityId);
     if (!player)
@@ -819,268 +968,22 @@ void __cdecl NativeOpenVirtualContainer(int entityId, int nativeType, const char
     if (player->containerMenu != player->inventoryMenu)
         player->closeContainer();
 
-    std::wstring title = ServerRuntime::StringUtils::Utf8ToWide(std::string(titleUtf8, titleByteLen));
-    auto container = std::make_shared<VirtualContainer>(nativeType, title, slotCount);
+    int offset = 0;
+    short titleLength = ((containerBuffer[offset] << 8) | containerBuffer[offset + 1]); offset += 2;
+    wstring title = L"";
+    for (int i = 0; i < titleLength; i++) {
+        wchar_t c = (containerBuffer[offset] << 8) | containerBuffer[offset + 1]; offset += 2;
+        title.push_back(c);
+    }
 
+    auto container = std::make_shared<VirtualContainer>(nativeType, title, slotCount);
+    
     for (int i = 0; i < slotCount; i++)
     {
-        int id = itemsBuf[i * 3];
-        int count = itemsBuf[i * 3 + 1];
-        int aux = itemsBuf[i * 3 + 2];
-        if (id > 0 && count > 0)
-            container->setItem(i, std::make_shared<ItemInstance>(id, count, aux));
+        container->setItem(i, Transformation_ReadItemFromBuffer(containerBuffer, offset));
     }
 
     player->openContainer(container);
-}
-//didnt update this for enchants
-// [nameLen:int32][nameUTF8:bytes][loreCount:int32][lore0Len:int32][lore0UTF8:bytes]
-int __cdecl NativeGetItemMeta(int entityId, int slot, char *outBuf, int bufSize)
-{
-    auto player = FindPlayer(entityId);
-    if (!player || !player->inventory)
-        return 0;
-
-    unsigned int size = player->inventory->getContainerSize();
-    if (slot < 0 || slot >= (int)size)
-        return 0;
-
-    auto item = player->inventory->getItem(slot);
-    if (!item || !item->hasTag())
-        return 0;
-
-    CompoundTag *tag = item->getTag();
-
-    bool hasEnchantments = item->isEnchanted();
-
-    CompoundTag *display = (tag && tag->contains(L"display")) ? tag->getCompound(L"display") : nullptr;
-    bool hasName = display && display->contains(L"Name");
-    bool hasLore = display && display->contains(L"Lore");
-
-    if (!hasName && !hasLore && !hasEnchantments)
-        return 0;
-
-    int offset = 0;
-
-    if (hasName)
-    {
-        std::wstring wname = display->getString(L"Name");
-        std::string nameUtf8 = ServerRuntime::StringUtils::WideToUtf8(wname);
-        int nameLen = (int)nameUtf8.size();
-        if (offset + 4 + nameLen > bufSize) return 0;
-        memcpy(outBuf + offset, &nameLen, 4);
-        offset += 4;
-        memcpy(outBuf + offset, nameUtf8.data(), nameLen);
-        offset += nameLen;
-    }
-    else
-    {
-        int zero = 0;
-        if (offset + 4 > bufSize) return 0;
-        memcpy(outBuf + offset, &zero, 4);
-        offset += 4;
-    }
-
-    if (hasLore)
-    {
-        ListTag<StringTag> *lore = (ListTag<StringTag> *)display->getList(L"Lore");
-        int loreCount = lore->size();
-        if (offset + 4 > bufSize) return 0;
-        memcpy(outBuf + offset, &loreCount, 4);
-        offset += 4;
-
-        for (int i = 0; i < loreCount; i++)
-        {
-            std::wstring wline = lore->get(i)->data;
-            std::string lineUtf8 = ServerRuntime::StringUtils::WideToUtf8(wline);
-            int lineLen = (int)lineUtf8.size();
-            if (offset + 4 + lineLen > bufSize) return 0;
-            memcpy(outBuf + offset, &lineLen, 4);
-            offset += 4;
-            memcpy(outBuf + offset, lineUtf8.data(), lineLen);
-            offset += lineLen;
-        }
-    }
-    else
-    {
-        int zero = 0;
-        if (offset + 4 > bufSize) return 0;
-        memcpy(outBuf + offset, &zero, 4);
-        offset += 4;
-    }
-
-    if (hasEnchantments) {
-        ListTag<CompoundTag>* list = item->getEnchantmentTags();
-        if (list != nullptr) {
-            int listSize = list->size();
-
-            if ((offset + 4 + (listSize * (4 + 4))) > bufSize) return 0;
-
-            memcpy(outBuf + offset, &listSize, 4);
-            offset += 4;
-            for (int i = 0; i < listSize; i++) {
-                int type = list->get(i)->getShort((wchar_t*)ItemInstance::TAG_ENCH_ID);
-                int level = list->get(i)->getShort((wchar_t*)ItemInstance::TAG_ENCH_LEVEL);
-
-                memcpy(outBuf + offset, &type, 4);
-                offset += 4;
-
-                memcpy(outBuf + offset, &level, 4);
-                offset += 4;
-            }
-        }
-    }
-    else {
-        int zero = 0;
-        if (offset + 4 > bufSize) return 0;
-        memcpy(outBuf + offset, &zero, 4);
-        offset += 4;
-    }
-
-    return offset;
-}
-
-void __cdecl NativeSetItemMeta(int entityId, int slot, const char *inBuf, int bufSize)
-{
-    auto player = FindPlayer(entityId);
-    if (!player || !player->inventory)
-        return;
-
-    unsigned int size = player->inventory->getContainerSize();
-    if (slot < 0 || slot >= (int)size)
-        return;
-
-    auto item = player->inventory->getItem(slot);
-    if (!item)
-        return;
-
-    if (inBuf == nullptr || bufSize <= 0)
-    {
-        item->resetHoverName();
-        if (item->hasTag())
-        {
-            CompoundTag *tag = item->getTag();
-            if (tag && tag->contains(L"display"))
-            {
-                CompoundTag *display = tag->getCompound(L"display");
-                display->remove(L"Lore");
-                if (display->isEmpty())
-                {
-                    tag->remove(L"display");
-                    if (tag->isEmpty())
-                        item->setTag(nullptr);
-                }
-            }
-
-            if (tag && tag->contains(L"ench"))
-            {
-                tag->remove(L"ench");
-            }
-        }
-        return;
-    }
-
-    int offset = 0;
-
-    if (offset + 4 > bufSize) return;
-    int nameLen = 0;
-    memcpy(&nameLen, inBuf + offset, 4);
-    offset += 4;
-
-    if (nameLen > 0)
-    {
-        if (offset + nameLen > bufSize) return;
-        std::string nameUtf8(inBuf + offset, nameLen);
-        offset += nameLen;
-        std::wstring wname = ServerRuntime::StringUtils::Utf8ToWide(nameUtf8);
-        item->setHoverName(wname);
-    }
-    else
-    {
-        item->resetHoverName();
-    }
-
-    if (offset + 4 > bufSize) return;
-    int loreCount = 0;
-    memcpy(&loreCount, inBuf + offset, 4);
-    offset += 4;
-
-    if (loreCount > 0)
-    {
-        if (!item->hasTag()) item->setTag(new CompoundTag());
-        CompoundTag *tag = item->getTag();
-        if (!tag->contains(L"display")) tag->putCompound(L"display", new CompoundTag());
-        CompoundTag *display = tag->getCompound(L"display");
-
-        auto *loreList = new ListTag<StringTag>(L"Lore");
-        for (int i = 0; i < loreCount; i++)
-        {
-            if (offset + 4 > bufSize) break;
-            int lineLen = 0;
-            memcpy(&lineLen, inBuf + offset, 4);
-            offset += 4;
-
-            std::wstring wline;
-            if (lineLen > 0 && offset + lineLen <= bufSize)
-            {
-                std::string lineUtf8(inBuf + offset, lineLen);
-                offset += lineLen;
-                wline = ServerRuntime::StringUtils::Utf8ToWide(lineUtf8);
-            }
-            loreList->add(new StringTag(L"", wline));
-        }
-        display->put(L"Lore", loreList);
-    }
-    else
-    {
-        if (item->hasTag())
-        {
-            CompoundTag *tag = item->getTag();
-            if (tag && tag->contains(L"display"))
-                tag->getCompound(L"display")->remove(L"Lore");
-        }
-    }
-
-    if (offset + 4 > bufSize) return;
-    int enchantCount = 0;
-    memcpy(&enchantCount, inBuf + offset, 4);
-    offset += 4;
-
-    if (enchantCount > 0)
-    {
-        if (!item->hasTag()) item->setTag(new CompoundTag());
-        CompoundTag* tag = item->getTag();
-        if (!tag->contains(L"ench")) tag->put(L"ench", new ListTag<CompoundTag>(L"ench"));
-        ListTag<CompoundTag>* enchantments = static_cast<ListTag<CompoundTag> *>(tag->get(L"ench"));
-
-        for (int i = 0; i < enchantCount; i++) {
-            if (offset + (4 + 4) > bufSize) break;
-
-            int type = 0;
-            memcpy(&type, inBuf + offset, 4);
-            offset += 4;
-
-            int level = 0;
-            memcpy(&level, inBuf + offset, 4);
-            offset += 4;
-
-            CompoundTag* ench = new CompoundTag();
-            ench->putShort((wchar_t*)ItemInstance::TAG_ENCH_ID, static_cast<short>(type));
-            ench->putShort((wchar_t*)ItemInstance::TAG_ENCH_LEVEL, static_cast<byte>(level));
-            enchantments->add(ench);
-        }
-    }
-    else
-    {
-        if (item->hasTag())
-        {
-            CompoundTag* tag = item->getTag();
-            if (tag && tag->contains(L"ench"))
-            {
-                tag->remove(L"ench");
-            }
-        }
-    }
 }
 
 void __cdecl NativeSetHeldItemSlot(int entityId, int slot)
@@ -1135,7 +1038,7 @@ void __cdecl NativeGetEnderChestContents(int entityId, int *outData)
         size = 27;
     for (unsigned int i = 0; i < size; i++)
     {
-        WriteInventoryItemData(ec->getItem(i), i, outData);
+        //WriteInventoryItemData(ec->getItem(i), i, outData);
     }
 }
 

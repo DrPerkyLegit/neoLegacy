@@ -58,11 +58,11 @@ public static partial class FourKitHost
     }
 
     [UnmanagedCallersOnly]
-    public static void SetInventoryCallbacks(IntPtr getPlayerInventory, IntPtr setPlayerInventorySlot, IntPtr getContainerContents, IntPtr setContainerSlot, IntPtr getContainerViewerEntityIds, IntPtr closeContainer, IntPtr openVirtualContainer, IntPtr getItemMeta, IntPtr setItemMeta, IntPtr setHeldItemSlot, IntPtr getCarriedItem, IntPtr setCarriedItem, IntPtr getEnderChestContents, IntPtr setEnderChestSlot)
+    public static void SetInventoryCallbacks(IntPtr getPlayerInventory, IntPtr setPlayerInventorySlot, IntPtr getContainerContents, IntPtr setContainerSlot, IntPtr getContainerViewerEntityIds, IntPtr closeContainer, IntPtr openVirtualContainer, IntPtr setHeldItemSlot, IntPtr getCarriedItem, IntPtr setCarriedItem, IntPtr getEnderChestContents, IntPtr setEnderChestSlot)
     {
         try
         {
-            NativeBridge.SetInventoryCallbacks(getPlayerInventory, setPlayerInventorySlot, getContainerContents, setContainerSlot, getContainerViewerEntityIds, closeContainer, openVirtualContainer, getItemMeta, setItemMeta, setHeldItemSlot, getCarriedItem, setCarriedItem, getEnderChestContents, setEnderChestSlot);
+            NativeBridge.SetInventoryCallbacks(getPlayerInventory, setPlayerInventorySlot, getContainerContents, setContainerSlot, getContainerViewerEntityIds, closeContainer, openVirtualContainer, setHeldItemSlot, getCarriedItem, setCarriedItem, getEnderChestContents, setEnderChestSlot);
         }
         catch (Exception ex)
         {
