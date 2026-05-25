@@ -266,7 +266,7 @@ private:
 #endif
 #endif
 
-	bool IsServerPaused() { return m_isServerPaused; }
+	
 
 private:
 	// 4J Added
@@ -291,6 +291,7 @@ public:
 	const wstring& getSaveFolderName() const { return m_saveFolderName; }
 	void Suspend();
 	bool IsSuspending();
+	bool IsServerPaused() { return m_isServerPaused; }
 
 	// 4J Stu - A load of functions were all added in 1.0.1 in the ServerInterface, but I don't think we need any of them
 };

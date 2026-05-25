@@ -20,3 +20,4 @@
 #include "TheEndPortalTileEntity.h"
 #include "SkullTileEntity.h"
 #include "EnderChestTileEntity.h"
+#include "ItemFrame.h"

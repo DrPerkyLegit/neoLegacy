@@ -2,6 +2,7 @@
 
 #include "DiodeTile.h"
 #include "EntityTile.h"
+#include "AABB.h"
 
 class ComparatorTileEntity;
 
@@ -57,4 +58,5 @@ public:
 	virtual bool triggerEvent(Level *level, int x, int y, int z, int b0, int b1);
 	virtual shared_ptr<TileEntity> newTileEntity(Level *level);
 	virtual bool TestUse();
+	shared_ptr<ItemFrame> ComparatorTile::getItemFrame(Level* level,int x,int y,int z);
 };

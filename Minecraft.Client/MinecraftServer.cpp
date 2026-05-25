@@ -1848,7 +1848,7 @@ void MinecraftServer::run(int64_t seed, void *lpParameter)
             lastTime = now;
 
             // 4J Added ability to pause the server
-			if( !m_isServerPaused )
+			if( !m_isServerPaused && !app.IsAppPaused() )
             {
                 bool didTick = false;
                 if (levels[0]->allPlayersAreSleeping())

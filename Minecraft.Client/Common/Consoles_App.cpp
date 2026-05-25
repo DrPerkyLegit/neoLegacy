@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "../../Minecraft.World/net.minecraft.world.entity.item.h"
 #include "../../Minecraft.World/net.minecraft.world.entity.player.h"
 #include "../../Minecraft.World/net.minecraft.world.level.tile.entity.h"
@@ -453,7 +453,7 @@ void CMinecraftApp::SetAction(int iPad, eXuiAction action, LPVOID param)
 
 bool CMinecraftApp::IsAppPaused()
 {
-#if defined(_XBOX_ONE) || defined(__ORBIS__)
+#if defined(_XBOX_ONE) || defined(__ORBIS__) || defined(_WINDOWS64)
 	bool paused = m_bIsAppPaused;
 	EnterCriticalSection(&m_saveNotificationCriticalSection);
 	if( g_NetworkManager.IsLocalGame() && g_NetworkManager.GetPlayerCount() == 1 )

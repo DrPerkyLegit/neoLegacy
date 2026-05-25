@@ -15,8 +15,8 @@ MultiPlayerChunkCache::MultiPlayerChunkCache(Level *level)
 	XZSIZE = level->dimension->getXZSize(); // 4J Added
 	XZOFFSET = XZSIZE/2; // 4J Added
 	m_XZSize = XZSIZE;
-	hasData = new bool[XZSIZE * XZSIZE];
-	memset(hasData, 0, sizeof(bool) * XZSIZE * XZSIZE);
+	hasData = new bool[LEVEL_MIN_WIDTH * LEVEL_MIN_WIDTH];
+	memset(hasData, 0, sizeof(bool) * LEVEL_MIN_WIDTH * LEVEL_MIN_WIDTH);
 
 	emptyChunk = new EmptyLevelChunk(level, byteArray(16 * 16 * Level::maxBuildHeight), 0, 0);
 
@@ -93,8 +93,8 @@ MultiPlayerChunkCache::MultiPlayerChunkCache(Level *level)
 
 	this->level = level;
 
-	this->cache = new LevelChunk *[XZSIZE * XZSIZE];
-	memset(this->cache, 0, XZSIZE * XZSIZE * sizeof(LevelChunk *));
+	this->cache = new LevelChunk *[LEVEL_MIN_WIDTH * LEVEL_MIN_WIDTH];
+	memset(this->cache, 0, sizeof(LevelChunk*) * LEVEL_MIN_WIDTH * LEVEL_MIN_WIDTH);
 	InitializeCriticalSectionAndSpinCount(&m_csLoadCreate,4000);
 }
 
@@ -129,10 +129,11 @@ bool MultiPlayerChunkCache::reallyHasChunk(int x, int z)
 	// Check we're in range of the stored level - if we aren't, then consider that we do have that chunk as we'll be able to use the water chunk there
 	if( ( ix < 0 ) || ( ix >= XZSIZE ) ) return true;
 	if( ( iz < 0 ) || ( iz >= XZSIZE ) ) return true;
-	int idx = ix * XZSIZE + iz;
+
+	int idx = wrapCoord(x, LEVEL_MIN_WIDTH) * LEVEL_MIN_WIDTH + wrapCoord(z, LEVEL_MIN_WIDTH);
 
 	LevelChunk *chunk = cache[idx];
-	if( chunk == nullptr )
+	if (chunk == nullptr || chunk->x != x || chunk->z != z)
 	{
 		return false;
 	}
@@ -145,10 +146,11 @@ void MultiPlayerChunkCache::drop(const int x, const int z)
 	const int iz = z + XZOFFSET;
 	if ((ix < 0) || (ix >= XZSIZE)) return;
 	if ((iz < 0) || (iz >= XZSIZE)) return;
-	const int idx = ix * XZSIZE + iz;
+
+	int idx = wrapCoord(x, LEVEL_MIN_WIDTH) * LEVEL_MIN_WIDTH + wrapCoord(z, LEVEL_MIN_WIDTH);
 	LevelChunk* chunk = cache[idx];
 
-	if (chunk != nullptr && !chunk->isEmpty())
+	if (chunk != nullptr && !chunk->isEmpty() && chunk->x == x && chunk->z == z)
 	{
 		// Drop entities in the chunks, especially for the case when a player is dead
 		// as they will not get the RemoveEntity packet if an entity is removed.
@@ -168,11 +170,12 @@ LevelChunk *MultiPlayerChunkCache::create(int x, int z)
 	// Check we're in range of the stored level
 	if( ( ix < 0 ) || ( ix >= XZSIZE ) ) return ( waterChunk ? waterChunk : emptyChunk );
 	if( ( iz < 0 ) || ( iz >= XZSIZE ) ) return ( waterChunk ? waterChunk : emptyChunk );
-	int idx = ix * XZSIZE + iz;
+	int idx = wrapCoord(x, LEVEL_MIN_WIDTH) * LEVEL_MIN_WIDTH + wrapCoord(z, LEVEL_MIN_WIDTH);
+
 	LevelChunk *chunk = cache[idx];
 	LevelChunk *lastChunk = chunk;
 
-	if( chunk == nullptr )
+	if( chunk == nullptr || chunk->x != x || chunk->z != z )
 	{
 		EnterCriticalSection(&m_csLoadCreate);
 
@@ -251,10 +254,10 @@ LevelChunk *MultiPlayerChunkCache::getChunk(int x, int z)
 	// Check we're in range of the stored level
 	if( ( ix < 0 ) || ( ix >= XZSIZE ) ) return ( waterChunk ? waterChunk : emptyChunk );
 	if( ( iz < 0 ) || ( iz >= XZSIZE ) ) return ( waterChunk ? waterChunk : emptyChunk );
-	int idx = ix * XZSIZE + iz;
+	int idx = wrapCoord(x, LEVEL_MIN_WIDTH) * LEVEL_MIN_WIDTH + wrapCoord(z, LEVEL_MIN_WIDTH);
 
 	LevelChunk *chunk = cache[idx];
-	if( chunk == nullptr )
+	if( chunk == nullptr || chunk->x != x || chunk->z != z )
 	{
 		return emptyChunk;
 	}
@@ -313,6 +316,6 @@ void MultiPlayerChunkCache::dataReceived(int x, int z)
 	// Check we're in range of the stored level
 	if( ( ix < 0 ) || ( ix >= XZSIZE ) ) return;
 	if( ( iz < 0 ) || ( iz >= XZSIZE ) ) return;
-	int idx = ix * XZSIZE + iz;
+	int idx = wrapCoord(x, LEVEL_MIN_WIDTH) * LEVEL_MIN_WIDTH + wrapCoord(z, LEVEL_MIN_WIDTH);
 	hasData[idx] = true;
 }

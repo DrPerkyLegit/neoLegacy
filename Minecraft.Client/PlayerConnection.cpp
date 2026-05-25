@@ -183,7 +183,7 @@ void PlayerConnection::tick()
 	// Ensure server-side player tick runs even when no move packet was received this tick.
 	// Without this, environmental damage (drowning, fire, lava) is never applied to clients
 	// that don't send frequent move packets.
-	if (!didTick && player != nullptr)
+	if (!didTick && player != nullptr && !server->IsServerPaused() && !app.IsAppPaused())
 	{
 		player->doTick(false);
 	}

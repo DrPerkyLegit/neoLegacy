@@ -46,6 +46,7 @@ DWORD Level::tlsIdxLightCache = TlsAlloc();
 
 // 4J : WESTY : Added for time played stats.
 #include "net.minecraft.stats.h"
+#include "../Minecraft.Client/MultiPlayerChunkCache.h"
 
 // 4J - Caching of lighting data added. This is implemented as a 16x16x16 cache of ints (ie 16K storage in total). The index of the element to be used in the array is determined by the lower
 // four bits of each x/y/z position, and the upper 7/4/7 bits of the x/y/z positions are stored within the element itself along with the cached values etc. The cache can be enabled per thread by
@@ -1332,10 +1333,10 @@ int Level::getBrightness(LightLayer::variety layer, int x, int y, int z)
 
 	if( ( ix < 0 ) || ( ix >= chunkSourceXZSize ) ) return 0;
 	if( ( iz < 0 ) || ( iz >= chunkSourceXZSize ) ) return 0;
-	int idx = ix * chunkSourceXZSize + iz;
+	int idx = MultiPlayerChunkCache::wrapCoord(ix, LEVEL_MIN_WIDTH) * LEVEL_MIN_WIDTH + MultiPlayerChunkCache::wrapCoord(iz, LEVEL_MIN_WIDTH);
 	LevelChunk *c = chunkSourceCache[idx];
 
-	if( c == nullptr ) return (int)layer;
+	if( c == nullptr) return (int)layer;
 
 	if (y < 0) y = 0;
 	if (y >= maxBuildHeight) y = maxBuildHeight - 1;
@@ -1381,7 +1382,7 @@ void Level::getNeighbourBrightnesses(int *brightnesses, LightLayer::variety laye
 			return;
 		}
 
-		int idx = ix * chunkSourceXZSize + iz;
+		int idx = MultiPlayerChunkCache::wrapCoord(ix, LEVEL_MIN_WIDTH) * LEVEL_MIN_WIDTH + MultiPlayerChunkCache::wrapCoord(iz, LEVEL_MIN_WIDTH);
 		LevelChunk *c = chunkSourceCache[idx];
 
 		// 4J Stu - The java LightLayer was an enum class type with a member "surrounding" which is what we

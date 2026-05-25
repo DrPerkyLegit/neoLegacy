@@ -45,4 +45,9 @@ public:
 	virtual void dataReceived(int x, int z);	// 4J added
 
 	virtual LevelChunk **getCache() { return cache; }		// 4J added
+
+	static inline int wrapCoord(int v, int size) {
+		int r = v % size;
+		return (r < 0) ? r + size : r;
+	}
 };

@@ -110,81 +110,75 @@ void ItemFrameRenderer::drawFrame(shared_ptr<ItemFrame> itemFrame)
 
 void ItemFrameRenderer::drawItem(shared_ptr<ItemFrame> entity) 
 {
-	Minecraft *pMinecraft=Minecraft::GetInstance();
 
-	shared_ptr<ItemInstance> instance = entity->getItem();
-	if (instance == nullptr) return;
+    shared_ptr<ItemInstance> instance = entity->getItem();
+    if (instance == nullptr) return;
 
-	shared_ptr<ItemEntity> itemEntity = std::make_shared<ItemEntity>(entity->level, 0, 0, 0, instance);
-	itemEntity->getItem()->count = 1;
-	itemEntity->bobOffs = 0;
+    shared_ptr<ItemEntity> itemEntity = std::make_shared<ItemEntity>(entity->level, 0, 0, 0, instance);
+    itemEntity->getItem()->count = 1;
+    itemEntity->bobOffs = 0;
 
-	glPushMatrix();
+    glPushMatrix();
 
-	glTranslatef((-7.25f / 16.0f) * Direction::STEP_X[entity->dir], -0.18f, (-7.25f / 16.0f) * Direction::STEP_Z[entity->dir]);
-	glRotatef(180 + entity->yRot, 0, 1, 0);
-	glRotatef(-90 * entity->getRotation(), 0, 0, 1);
+    glRotatef(180.0f + entity->yRot, 0, 1, 0);
+	glTranslatef(0.0f, 0.0f, -0.4375f);
 
-	switch (entity->getRotation()) 
-	{
-	case 1:
-		glTranslatef(-0.16f, -0.16f, 0);
-		break;
-	case 2:
-		glTranslatef(0, -0.32f, 0);
-		break;
-	case 3:
-		glTranslatef(0.16f, -0.16f, 0);
-		break;
-	}
+	int rotation = entity->getRotation();
+	bool isMap = (itemEntity->getItem()->getItem() == Item::map);
+	int effectiveRotation = isMap ? 2 * (rotation % 4) : rotation;
 
-	if (itemEntity->getItem()->getItem() == Item::map) 
-	{
-		entityRenderDispatcher->textures->bindTexture(&MAP_BACKGROUND_LOCATION);
-		Tesselator *t = Tesselator::getInstance();
+	glRotatef(-45.0f * effectiveRotation, 0, 0, 1);
+	glTranslatef(0.0f, -0.41f/2, 0.0f);  
 
-		glRotatef(180, 0, 1, 0);
-		glRotatef(180, 0, 0, 1);
-		glScalef(1.0f / 128.0f, 1.0f / 128.0f, 1.0f / 128.0f);
-		glTranslatef(-64.0f, -87.0f, -3.0f);
-		glNormal3f(0, 0, -1);
-		t->begin();
-		int vo = 7;
-		t->vertexUV(0.0f, 128.0f, 0.0f, 0.0f, 1.0f);
-		t->vertexUV(128.0f, 128.0f, 0.0f, 1.0f, 1.0f);
-		t->vertexUV(128.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-		t->vertexUV(0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-		t->end();
+    if (isMap) 
+    {
+        //entityRenderDispatcher->textures->bindTexture(&MAP_BACKGROUND_LOCATION);
+        //Tesselator *t = Tesselator::getInstance();
 
- 		shared_ptr<MapItemSavedData> data = Item::map->getSavedData(itemEntity->getItem(), entity->level);
- 		if (data != nullptr) 
- 		{
-			entityRenderDispatcher->itemInHandRenderer->minimap->render(nullptr, entityRenderDispatcher->textures, data, entity->entityId);
- 		}
-	} 
-	else 
-	{
-		if (itemEntity->getItem()->getItem() == Item::compass)
-		{
-			CompassTexture *ct = CompassTexture::instance;
-			double compassRot = ct->rot;
-			double compassRotA = ct->rota;
-			ct->rot = 0;
-			ct->rota = 0;
-			ct->updateFromPosition(entity->level, entity->x, entity->z, Mth::wrapDegrees( static_cast<float>(180 + entity->dir * 90) ), false, true);
-			ct->rot = compassRot;
-			ct->rota = compassRotA;
-		}
+        glRotatef(180, 0, 1, 0);
+        glRotatef(180, 0, 0, 1);
+        glScalef(1.0f / 128.0f, 1.0f / 128.0f, 1.0f / 128.0f);
+        glTranslatef(-64.0f, -87.0f, -3.0f);
 
-		EntityRenderDispatcher::instance->render(itemEntity, 0, 0, 0, 0, 0, true);
+        //glNormal3f(0, 0, -1);
+        //t->begin();
+        //t->vertexUV(0.0f,   128.0f, 0.0f, 0.0f, 1.0f);
+        //t->vertexUV(128.0f, 128.0f, 0.0f, 1.0f, 1.0f);
+        //t->vertexUV(128.0f, 0.0f,   0.0f, 1.0f, 0.0f);
+        //t->vertexUV(0.0f,   0.0f,   0.0f, 0.0f, 0.0f);
+        //t->end();
 
-		if (itemEntity->getItem()->getItem() == Item::compass)
-		{
-			CompassTexture *ct = CompassTexture::instance;
-			ct->cycleFrames();
-		}
-	}
-	
-	glPopMatrix();
+        shared_ptr<MapItemSavedData> data = Item::map->getSavedData(itemEntity->getItem(), entity->level);
+        if (data != nullptr) 
+        {
+            entityRenderDispatcher->itemInHandRenderer->minimap->render(
+                nullptr, entityRenderDispatcher->textures, data, entity->entityId);
+        }
+    } 
+    else 
+    {
+        if (itemEntity->getItem()->getItem() == Item::compass)
+        {
+            CompassTexture *ct = CompassTexture::instance;
+            double compassRot = ct->rot;
+            double compassRotA = ct->rota;
+            ct->rot = 0;
+            ct->rota = 0;
+            ct->updateFromPosition(entity->level, entity->x, entity->z,
+                Mth::wrapDegrees(static_cast<float>(180 + entity->dir * 90)), false, true);
+            ct->rot = compassRot;
+            ct->rota = compassRotA;
+        }
+
+        EntityRenderDispatcher::instance->render(itemEntity, 0, 0, 0, 0, 0, true);
+
+        if (itemEntity->getItem()->getItem() == Item::compass)
+        {
+            CompassTexture *ct = CompassTexture::instance;
+            ct->cycleFrames();
+        }
+    }
+
+    glPopMatrix();
 }
 

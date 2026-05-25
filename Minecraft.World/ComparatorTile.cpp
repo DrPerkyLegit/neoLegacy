@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "net.minecraft.world.item.h"
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.level.redstone.h"
@@ -107,33 +107,42 @@ bool ComparatorTile::shouldTurnOn(Level *level, int x, int y, int z, int data)
 
 int ComparatorTile::getInputSignal(Level *level, int x, int y, int z, int data)
 {
-	int result = DiodeTile::getInputSignal(level, x, y, z, data);
+    int result = DiodeTile::getInputSignal(level, x, y, z, data);
 
-	int dir = getDirection(data);
-	int xx = x + Direction::STEP_X[dir];
-	int zz = z + Direction::STEP_Z[dir];
-	int tile = level->getTile(xx, y, zz);
+    int dir = getDirection(data);
+    int xx = x + Direction::STEP_X[dir];
+    int zz = z + Direction::STEP_Z[dir];
+    int tile = level->getTile(xx, y, zz);
 
-	if (tile > 0)
-	{
-		if (Tile::tiles[tile]->hasAnalogOutputSignal())
-		{
-			result = Tile::tiles[tile]->getAnalogOutputSignal(level, xx, y, zz, Direction::DIRECTION_OPPOSITE[dir]);
-		}
-		else if (result < Redstone::SIGNAL_MAX && Tile::isSolidBlockingTile(tile))
-		{
-			xx += Direction::STEP_X[dir];
-			zz += Direction::STEP_Z[dir];
-			tile = level->getTile(xx, y, zz);
+    if (tile > 0)
+    {
+        if (Tile::tiles[tile]->hasAnalogOutputSignal())
+        {
+            result = Tile::tiles[tile]->getAnalogOutputSignal(level, xx, y, zz, Direction::DIRECTION_OPPOSITE[dir]);
+        }
+        else if (result < Redstone::SIGNAL_MAX && Tile::isSolidBlockingTile(tile))
+        {
+            xx += Direction::STEP_X[dir];
+            zz += Direction::STEP_Z[dir];
+            tile = level->getTile(xx, y, zz);
 
-			if (tile > 0 && Tile::tiles[tile]->hasAnalogOutputSignal())
-			{
-				result = Tile::tiles[tile]->getAnalogOutputSignal(level, xx, y, zz, Direction::DIRECTION_OPPOSITE[dir]);
-			}
-		}
-	}
+            if (tile > 0 && Tile::tiles[tile]->hasAnalogOutputSignal())
+            {
+                result = Tile::tiles[tile]->getAnalogOutputSignal(level, xx, y, zz, Direction::DIRECTION_OPPOSITE[dir]);
+            }
+            
+            else if (tile == 0)
+            {
+                shared_ptr<ItemFrame> frame = getItemFrame(level, xx, y, zz);
+                if (frame != nullptr)
+                {
+                    result = frame->getAnalogOutput();
+                }
+            }
+        }
+    }
 
-	return result;
+    return result;
 }
 
 shared_ptr<ComparatorTileEntity> ComparatorTile::getComparator(LevelSource *level, int x, int y, int z)
@@ -250,4 +259,28 @@ shared_ptr<TileEntity> ComparatorTile::newTileEntity(Level *level)
 bool ComparatorTile::TestUse()
 {
 	return true;
+}
+
+shared_ptr<ItemFrame> ComparatorTile::getItemFrame(
+    Level* level,
+    int x,
+    int y,
+    int z)
+{
+    AABB* box = AABB::newTemp(
+        x,
+        y,
+        z,
+        x + 1,
+        y + 1,
+        z + 1
+    );
+
+    vector<shared_ptr<Entity>>* entities =
+        level->getEntitiesOfClass(typeid(ItemFrame), box);
+
+    if (entities == nullptr || entities->size() != 1)
+        return nullptr;
+
+    return dynamic_pointer_cast<ItemFrame>((*entities)[0]);
 }

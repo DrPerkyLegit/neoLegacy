@@ -38,9 +38,14 @@ private:
 
 public:
 	shared_ptr<ItemInstance> getItem();
+	void setItem(shared_ptr<ItemInstance> item, bool notifyNeighbors);
 	void setItem(shared_ptr<ItemInstance> item);
 	int getRotation();
+	void setRotation(int rotation, bool notifyNeighbors);
 	void setRotation(int rotation);
+	virtual bool hurt(DamageSource *source, float damage) override;
+	virtual int getAnalogOutput();
+	virtual float getPickRadius()override;
 
 	virtual void addAdditonalSaveData(CompoundTag *tag);
 	virtual void readAdditionalSaveData(CompoundTag *tag);

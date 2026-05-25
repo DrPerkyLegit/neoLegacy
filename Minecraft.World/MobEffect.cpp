@@ -137,9 +137,13 @@ void MobEffect::applyEffectTick(shared_ptr<LivingEntity> mob, int amplification)
 	}
 	else if (id == poison->id)
 	{
-		if (mob->getHealth() > 1.0f)
+		// poison must never reduce health below 1 hp
+		//	if the current health is between 1 and 2 hp the player is left at exactly 1 HP rather than dying.
+		float currentHealth = mob->getHealth();
+		if (currentHealth > 1.0f)
 		{
-			mob->hurt(DamageSource::magic, 1.0f);
+			float poisonDmg = min(1.0f, currentHealth - 1.0f);
+			mob->hurt(DamageSource::magic, poisonDmg);
 		}
 	}
 	else if (id == wither->id)

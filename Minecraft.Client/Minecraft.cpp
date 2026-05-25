@@ -1268,6 +1268,8 @@ void Minecraft::applyFrameMouseLook()
 
 void Minecraft::run_middle()
 {
+	pause = app.IsAppPaused();
+
 	static int64_t lastTime = 0;
 	static bool bFirstTimeIntoGame = true;
 	static bool bAutosaveTimerSet=false;
