@@ -628,8 +628,6 @@ static std::string WorldSizeToPropertyValue(int worldSize)
 		return "medium";
 	case e_worldSize_Large:
 		return "large";
-	case e_worldSize_Expanded:
-		return "expanded";
 	case e_worldSize_Classic:
 	default:
 		return "classic";
@@ -646,8 +644,6 @@ static int WorldSizeToXzChunks(int worldSize)
 		return LEVEL_WIDTH_MEDIUM;
 	case e_worldSize_Large:
 		return LEVEL_WIDTH_LARGE;
-	case e_worldSize_Expanded:
-		return LEVEL_WIDTH_EXPANDED;
 	case e_worldSize_Classic:
 	default:
 		return LEVEL_WIDTH_CLASSIC;
@@ -663,7 +659,6 @@ static int WorldSizeToHellScale(int worldSize)
 	case e_worldSize_Medium:
 		return HELL_LEVEL_SCALE_MEDIUM;
 	case e_worldSize_Large:
-	case e_worldSize_Expanded:
 		return HELL_LEVEL_SCALE_LARGE;
 	case e_worldSize_Classic:
 	default:
@@ -696,12 +691,6 @@ static bool TryParseWorldSize(const std::string &lowered, int *outWorldSize)
 	if (lowered == "large" || lowered == "320" || lowered == "4")
 	{
 		*outWorldSize = e_worldSize_Large;
-		return true;
-	}
-
-	if (lowered == "expanded" || lowered == "344" || lowered == "8")
-	{
-		*outWorldSize = e_worldSize_Expanded;
 		return true;
 	}
 

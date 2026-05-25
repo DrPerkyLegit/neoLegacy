@@ -56,8 +56,7 @@ enum EGameHostOptionWorldSize
 	e_worldSize_Classic,
 	e_worldSize_Small,
 	e_worldSize_Medium,
-	e_worldSize_Large,
-	e_worldSize_Expanded
+	e_worldSize_Large
 };
 
 
