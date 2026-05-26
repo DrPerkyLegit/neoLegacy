@@ -15,12 +15,14 @@ namespace FourKitBridge
     void Transformation_ReadItemMetaFromBuffer(ItemInstance* item, unsigned char* itemData, int& offset);
     void Transformation_WriteItemToBuffer(std::shared_ptr<ItemInstance> item, unsigned char* outBuffer, int& offset);
     std::shared_ptr<ItemInstance> Transformation_ReadItemFromBuffer(unsigned char* itemData, int& offset);
+    ItemInstance* Transformation_ReadItemFromBuffer_CStyle(unsigned char* itemData, int& offset);
     void Transformation_ReadItemFromBuffer(std::shared_ptr<ItemInstance> item, unsigned char* itemData, int& offset);
 
     void __cdecl NativeSetHandlerMask(uint32_t mask);
     bool HasHandlers(int kind);
 
     int __cdecl NativeGetServerTickCount();
+    void __cdecl NativeAddRecipe(unsigned char* recipeData);
 
     // core
     void __cdecl NativeDamagePlayer(int entityId, float amount);

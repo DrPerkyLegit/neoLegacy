@@ -177,11 +177,11 @@ public static partial class FourKitHost
     }
 
     [UnmanagedCallersOnly]
-    public static void SetServerCallbacks(IntPtr getServerTickCount)
+    public static void SetServerCallbacks(IntPtr getServerTickCount, IntPtr addRecipe)
     {
         try
         {
-            NativeBridge.SetServerCallbacks(getServerTickCount);
+            NativeBridge.SetServerCallbacks(getServerTickCount, addRecipe);
         }
         catch (Exception ex)
         {

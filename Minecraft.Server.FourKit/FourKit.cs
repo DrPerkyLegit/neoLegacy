@@ -5,6 +5,7 @@ using Minecraft.Server.FourKit.Entity;
 using Minecraft.Server.FourKit.Event;
 using Minecraft.Server.FourKit.Inventory;
 using Minecraft.Server.FourKit.Plugin;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// The main entry point for the FourKit plugin API.
@@ -130,6 +131,56 @@ public static class FourKit
     {
         _dispatcher.Register(listener);
         //Console.WriteLine($"[FourKit] Registered listener: {listener.GetType().Name}");
+    }
+
+    /// <summary>
+    /// Adds a recipe to the crafting manager.
+    /// </summary>
+    /// <param name="recipe">The recipe to add.</param>
+    /// <returns>True if the recipe was added, false if it wasn't for some reason.</returns>
+    public static bool addRecipe(Recipe recipe)
+    {
+        //todo: add some kinda error logging maybe
+        if (!recipe.isValid()) 
+            return false;
+
+        int offset = 0;
+        byte[] recipeBuffer = new byte[1024];
+        GCHandle recipeBufferHandle = GCHandle.Alloc(recipeBuffer, GCHandleType.Pinned);
+
+        try
+        {
+            if (typeof(ShapelessRecipe).IsAssignableFrom(recipe.GetType()))
+            {
+                ShapelessRecipe shapelessRecipe = (ShapelessRecipe)recipe;
+
+                recipeBuffer[offset] = 0x1;
+                offset += 1;
+
+                recipeBuffer[offset] = (byte)(((int)shapelessRecipe._group) & 0xFF);
+                offset += 1;
+
+                byte ingredientsCount = (byte)(shapelessRecipe._ingredients.Count & 0xFF);
+                recipeBuffer[offset] = ingredientsCount;
+                offset += 1;
+
+                for (int i = 0; i < ingredientsCount; i++)
+                {
+                    ItemStack.WriteToBuffer(shapelessRecipe._ingredients[i], recipeBuffer, ref offset);
+                }
+
+                ItemStack.WriteToBuffer(shapelessRecipe._result, recipeBuffer, ref offset);
+            }
+
+
+            NativeBridge.AddRecipe?.Invoke(recipeBufferHandle.AddrOfPinnedObject());
+            return true;
+        } finally
+        {
+            recipeBufferHandle.Free();
+        }
+
+        return false;
     }
     public static Player? getPlayer(string name)
     {

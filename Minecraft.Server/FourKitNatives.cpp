@@ -50,6 +50,8 @@
 #include "ServerLogManager.h"
 #include "../Minecraft.World/ItemInstance.cpp"
 
+#include "../Minecraft.World/Recipes.h"
+
 namespace
 {
 
@@ -129,6 +131,27 @@ int __cdecl NativeGetServerTickCount()
 {
     MinecraftServer *srv = MinecraftServer::getInstance();
     return srv ? srv->tickCount : 0;
+}
+
+void __cdecl NativeAddRecipe(unsigned char* recipeData)
+{
+    int offset = 0;
+    char recipeType = recipeData[offset]; offset += 1;
+
+    if (recipeType == 0x1) { //shapeless recipe
+        unsigned char recipeGroup = recipeData[offset]; offset += 1;
+        unsigned char ingredientsCount = recipeData[offset]; offset += 1;
+
+        std::vector<ItemInstance*>* ingredients = new std::vector<ItemInstance*>();
+        for (int i = 0; i < ingredientsCount; i++) {
+            ingredients->emplace_back(Transformation_ReadItemFromBuffer_CStyle(recipeData, offset));
+        }
+
+        ItemInstance* result = Transformation_ReadItemFromBuffer_CStyle(recipeData, offset);
+        Recipes::getInstance()->addShapelessRecipy(result, ingredients, (int)recipeGroup);
+    }
+
+    //Recipes::addShapelessRecipy
 }
 
 void __cdecl NativeDamagePlayer(int entityId, float amount)
@@ -794,7 +817,6 @@ void Transformation_WriteItemToBuffer(std::shared_ptr<ItemInstance> item, unsign
         int itemCount = item->count;
         int aux = item->getAuxValue();
 
-
         outBuffer[offset] = ((itemId >> 8) & 0xFF); offset += 1;
         outBuffer[offset] = (itemId & 0xFF); offset += 1;
 
@@ -807,6 +829,28 @@ void Transformation_WriteItemToBuffer(std::shared_ptr<ItemInstance> item, unsign
     }
 }
 
+ItemInstance* Transformation_ReadItemFromBuffer_CStyle(unsigned char* itemData, int& offset) {
+    unsigned char isItemNull = itemData[offset]; offset += 1;
+
+    if (isItemNull == 0) {
+        int itemId = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+        int itemCount = itemData[offset]; offset += 1;
+        int aux = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+
+        if (aux >= 65535) aux = -1; //for some reason -1 aux comes over as 65535, too lazy to fix
+
+        ItemInstance* item = new ItemInstance(itemId, itemCount, aux);
+        item->setRawAuxValue(aux); //allow plugins to do whatever they want with aux
+
+        Transformation_ReadItemMetaFromBuffer(item, itemData, offset);
+
+        return item;
+    }
+
+    return nullptr;
+}
+
+
 std::shared_ptr<ItemInstance> Transformation_ReadItemFromBuffer(unsigned char* itemData, int& offset) {
     unsigned char isItemNull = itemData[offset]; offset += 1;
 
@@ -814,6 +858,8 @@ std::shared_ptr<ItemInstance> Transformation_ReadItemFromBuffer(unsigned char* i
         int itemId = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
         int itemCount = itemData[offset]; offset += 1;
         int aux = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+
+        if (aux >= 65535) aux = -1; //for some reason -1 aux comes over as 65535, too lazy to fix
 
         std::shared_ptr<ItemInstance> item = std::make_shared<ItemInstance>(itemId, itemCount, aux);
         item->setRawAuxValue(aux); //allow plugins to do whatever they want with aux

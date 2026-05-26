@@ -105,7 +105,7 @@ typedef void(__stdcall *fn_set_chunk_callbacks)(void *isChunkLoaded, void *loadC
 typedef void(__stdcall *fn_set_block_info_callbacks)(void *getSkyLight, void *getBlockLight, void *getBiomeId, void *setBiomeId);
 typedef void(__stdcall *fn_set_world_entity_callbacks)(void *getWorldEntities, void *getChunkEntities);
 typedef void(__stdcall *fn_set_subscription_callbacks)(void *setHandlerMask);
-typedef void(__stdcall *fn_set_server_callbacks)(void *getServerTickCount);
+typedef void(__stdcall *fn_set_server_callbacks)(void *getServerTickCount, void* addRecipe);
 typedef void(__stdcall *fn_fire_chunk_load)(int dimId, int chunkX, int chunkZ, int isNewChunk);
 typedef int(__stdcall *fn_fire_chunk_unload)(int dimId, int chunkX, int chunkZ);
 
@@ -275,10 +275,6 @@ void Initialize()
         return;
     }
 
-    s_initialized = true;
-
-    s_managedInit();
-
     s_managedSetCallbacks(
         (void *)&NativeDamagePlayer,
         (void *)&NativeSetPlayerHealth,
@@ -382,7 +378,12 @@ void Initialize()
         (void *)&NativeSetHandlerMask);
 
     s_managedSetServerCallbacks(
-        (void *)&NativeGetServerTickCount);
+        (void *)&NativeGetServerTickCount,
+        (void *)&NativeAddRecipe
+    );
+
+    s_initialized = true;
+    s_managedInit();
 
     LogInfo("fourkit", "FourKit initialized successfully.");
 }

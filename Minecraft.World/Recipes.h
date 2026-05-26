@@ -87,11 +87,14 @@ private:
 	void _init(); // 4J add
 	void _compileRecipes();
 	void _wipeRecipes();
+	void _wipeIngredientsList();
 	Recipes();
 
 public:
 	ShapedRecipy *addShapedRecipy(ItemInstance *, ... );
-	void addShapelessRecipy(ItemInstance *result,... ); 
+	void addShapelessRecipy(ItemInstance *result,... );
+
+	void addShapelessRecipy(ItemInstance* result, std::vector<ItemInstance*>* ingredients, int group);
 
 	shared_ptr<ItemInstance> getItemFor(shared_ptr<CraftingContainer> craftSlots, Level *level, Recipy *recipesClass = nullptr); // 4J Added recipesClass param
 	vector <Recipy *> *getRecipies();

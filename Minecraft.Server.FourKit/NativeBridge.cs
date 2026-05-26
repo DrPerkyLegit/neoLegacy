@@ -6,6 +6,10 @@ namespace Minecraft.Server.FourKit;
 
 internal static class NativeBridge
 {
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void NativeAddRecipeDelegate(IntPtr recipeData);
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeDamageDelegate(int entityId, float amount);
 
@@ -245,6 +249,8 @@ internal static class NativeBridge
     internal delegate int NativeGetServerTickCountDelegate();
     internal static NativeGetServerTickCountDelegate? GetServerTickCount;
 
+    internal static NativeAddRecipeDelegate? AddRecipe;
+
     internal static NativeDamageDelegate? DamagePlayer;
     internal static NativeSetHealthDelegate? SetPlayerHealth;
     internal static NativeTeleportDelegate? TeleportPlayer;
@@ -452,8 +458,9 @@ internal static class NativeBridge
         SetHandlerMask = Marshal.GetDelegateForFunctionPointer<NativeSetHandlerMaskDelegate>(setHandlerMask);
     }
 
-    internal static void SetServerCallbacks(IntPtr getServerTickCount)
+    internal static void SetServerCallbacks(IntPtr getServerTickCount, IntPtr addRecipe)
     {
         GetServerTickCount = Marshal.GetDelegateForFunctionPointer<NativeGetServerTickCountDelegate>(getServerTickCount);
+        AddRecipe = Marshal.GetDelegateForFunctionPointer<NativeAddRecipeDelegate>(addRecipe);
     }
 }

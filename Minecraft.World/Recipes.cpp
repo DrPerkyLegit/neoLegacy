@@ -1242,10 +1242,8 @@ void Recipes::_compileRecipes()
 	buildRecipeIngredientsArray();
 }
 
-void Recipes::_wipeRecipes()
-{
+void Recipes::_wipeIngredientsList() {
 	int iCount = recipies->size();
-
 	for (int i = 0; i < iCount; i++) {
 		Recipy::INGREDIENTS_REQUIRED& req = m_pRecipeIngredientsRequired[i];
 
@@ -1255,14 +1253,20 @@ void Recipes::_wipeRecipes()
 		delete[] req.uiGridA;
 	}
 
+	delete[] m_pRecipeIngredientsRequired;
+	m_pRecipeIngredientsRequired = nullptr;
+}
+
+void Recipes::_wipeRecipes()
+{
+	_wipeIngredientsList();
+
+	int iCount = recipies->size();
 	for (int i = 0; i < iCount; i++) {
 		delete (*recipies)[i];
 	}
 
 	recipies->clear();
-
-	delete[] m_pRecipeIngredientsRequired;
-	m_pRecipeIngredientsRequired = nullptr;
 }
 
 Recipes::Recipes()
@@ -1493,6 +1497,15 @@ void Recipes::addShapelessRecipy(ItemInstance *result,... )
 	}
 
 	recipies->push_back(new ShapelessRecipy(result, ingredients, group));
+}
+
+void Recipes::addShapelessRecipy(ItemInstance* result, std::vector<ItemInstance*>* ingredients, int group)
+{
+	_wipeIngredientsList();
+
+	recipies->push_back(new ShapelessRecipy(result, ingredients, ((Recipy::_eGroupType)group)));
+
+	buildRecipeIngredientsArray();
 }
 
 shared_ptr<ItemInstance> Recipes::getItemFor(shared_ptr<CraftingContainer> craftSlots, Level *level, Recipy *recipesClass /*= nullptr*/)
