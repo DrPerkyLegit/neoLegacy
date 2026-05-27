@@ -290,24 +290,53 @@ void TrackedEntity::tick(EntityTracker *tracker, vector<shared_ptr<Player> > *pl
 			wasRiding = false;
 		}
 		else
-		{
-			bool rot = abs(yRotn - yRotp) >= TOLERANCE_LEVEL || abs(xRotn - xRotp) >= TOLERANCE_LEVEL;
-			if (rot)
-			{
-				// 4J: Changed this to use deltas
-				broadcast(std::make_shared<MoveEntityPacket::Rot>(e->entityId, static_cast<byte>(yRota), static_cast<byte>(xRota)));
-				yRotp = yRotn;
-				xRotp = xRotn;
-			}
+{
+    // the entity have a rider, the code didnt send position updates, 
+	// causing desync between client and server when boat was spritning.
 
-			xp = Mth::floor(e->x * 32.0);
-			yp = Mth::floor(e->y * 32.0);
-			zp = Mth::floor(e->z * 32.0);
+    bool rot = abs(yRotn - yRotp) >= TOLERANCE_LEVEL || abs(xRotn - xRotp) >= TOLERANCE_LEVEL;
+    if (rot)
+    {
+       
+        broadcast(std::make_shared<MoveEntityPacket::Rot>(e->entityId, static_cast<byte>(yRota), static_cast<byte>(xRota)));
+        yRotp = yRotn;
+        xRotp = xRotn;
+    }
 
-			sendDirtyEntityData();
+    int xn = Mth::floor(e->x * 32.0);
+    int yn = Mth::floor(e->y * 32.0);
+    int zn = Mth::floor(e->z * 32.0);
+    int xa = xn - xp;
+    int ya = yn - yp;
+    int za = zn - zp;
 
-			wasRiding = true;
-		}
+    // send only if the boat moved enough
+    // or 3 seconds periodically
+    bool pos = abs(xa) >= TOLERANCE_LEVEL || abs(ya) >= TOLERANCE_LEVEL || abs(za) >= TOLERANCE_LEVEL
+               || (tickCount % (SharedConstants::TICKS_PER_SECOND * 3) == 0);
+
+    if (pos)
+    {
+        // if deltapos is too much big use teleport.
+        if (xa < -128 || xa >= 128 || ya < -128 || ya >= 128 || za < -128 || za >= 128)
+        {
+            broadcast(std::make_shared<TeleportEntityPacket>(e->entityId, xn, yn, zn,
+                static_cast<byte>(yRotn), static_cast<byte>(xRotn)));
+        }
+        else
+        {
+            // small movement, delta
+            broadcast(std::make_shared<MoveEntityPacket::Pos>(e->entityId,
+                static_cast<char>(xa), static_cast<char>(ya), static_cast<char>(za)));
+        }
+        xp = xn;
+        yp = yn;
+        zp = zn;
+    }
+
+    sendDirtyEntityData();
+    wasRiding = true;
+}
 
 		int yHeadRot = Mth::floor(e->getYHeadRot() * 256 / 360);
 		if (abs(yHeadRot - yHeadRotp) >= TOLERANCE_LEVEL)
