@@ -152,6 +152,18 @@ void __cdecl NativeAddRecipe(unsigned char* recipeData)
     }
 
     //Recipes::addShapelessRecipy
+
+    if (recipeType == 0x1 || recipeType == 0x2) {
+        MinecraftServer* server = MinecraftServer::getInstance(); if (server == nullptr) return;
+        PlayerList* playerList = server->getPlayerList(); if (playerList == nullptr) return;
+
+        for (int i = 0; i < playerList->players.size(); i++) {
+            std::shared_ptr<ServerPlayer> player = playerList->players[i];
+            if (player == nullptr || player->connection == nullptr) continue; // this shouldnt happen
+
+            player->connection->send(Recipes::getInstance()->createUpdatePacket());
+        }
+    }
 }
 
 void __cdecl NativeDamagePlayer(int entityId, float amount)
