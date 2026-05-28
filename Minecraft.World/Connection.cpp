@@ -207,18 +207,15 @@ bool Connection::writeTick()
 	if(bufferedDos==nullptr || byteArrayDos==nullptr)
 		return didSomething;
 
+	EnterCriticalSection(&writeLock);
 	// try {
 	if (!outgoing.empty() && (fakeLag == 0 || System::currentTimeMillis() - outgoing.front()->createTime >= fakeLag))
 	{
 		shared_ptr<Packet> packet;
 
-		EnterCriticalSection(&writeLock);
-
 		packet = outgoing.front();
 		outgoing.pop();
 		estimatedRemaining -= packet->getEstimatedSize() + 1;
-
-		LeaveCriticalSection(&writeLock);
 
 		Packet::writePacket(packet, bufferedDos);
 		
@@ -254,13 +251,10 @@ bool Connection::writeTick()
 	if (!outgoingRaw.empty())
 	{
 		std::pair<unsigned char*, int> rawPacket;
-		EnterCriticalSection(&writeLock);
 
 		rawPacket = outgoingRaw.front();
 		outgoingRaw.pop();
 		estimatedRemainingRaw -= rawPacket.second;
-
-		LeaveCriticalSection(&writeLock);
 
 		for (int i = 0; i < rawPacket.second; i++) {
 			byteArrayDos->writeByte(rawPacket.first[i]);
@@ -283,13 +277,9 @@ bool Connection::writeTick()
 
 		//synchronized (writeLock) {
 
-		EnterCriticalSection(&writeLock);
-
 		packet = outgoing_slow.front();
 		outgoing_slow.pop();
 		estimatedRemaining -= packet->getEstimatedSize() + 1;
-
-		LeaveCriticalSection(&writeLock);
 
 		// If the shouldDelay flag is still set at this point then we want to write it to QNet as a single packet with priority flags
 		// Otherwise just buffer the packet with other outgoing packets as the java game did
@@ -346,6 +336,9 @@ bool Connection::writeTick()
 		slowWriteDelay = 0;
 		didSomething = true;
 	}
+
+	LeaveCriticalSection(&writeLock);
+
 	/* 4J JEV, removed try/catch
 	} catch (Exception e) {
 	if (!disconnected) handleException(e);
@@ -690,8 +683,7 @@ int Connection::runWrite(void* lpParam)
 
 	while ((con->running || waitResult == WAIT_OBJECT_0 ) && ShutdownManager::ShouldRun(ShutdownManager::eConnectionWriteThreads))
 	{
-		while (con->writeTick())
-			;
+		while (con->writeTick());
 
 		//Sleep(100L);	
 		// TODO - 4J Stu - 1.8.2 changes these sleeps to 2L, but not sure whether we should do that as well	
