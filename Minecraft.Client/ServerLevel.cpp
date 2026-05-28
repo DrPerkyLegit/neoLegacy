@@ -198,7 +198,7 @@ ServerLevel::~ServerLevel()
 
 void ServerLevel::tick()
 {
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	// ts[N] = wall-clock at substep N. Logged when level total exceeds
 	// LEVEL_SLOW_THRESHOLD_MS to pinpoint the dominant substep.
 	const int64_t LEVEL_SLOW_THRESHOLD_MS = 50;
@@ -227,7 +227,7 @@ void ServerLevel::tick()
 		}
 		awakenAllPlayers();
 	}
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[1] = System::currentTimeMillis();
 #endif
 
@@ -245,7 +245,7 @@ void ServerLevel::tick()
 		mobSpawner->tick(this, finalSpawnEnemies, finalSpawnFriendlies, finalSpawnPersistent);
 	}
 	PIXEndNamedEvent();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[2] = System::currentTimeMillis();
 #endif
 	PIXBeginNamedEvent(0,"Chunk source tick");
@@ -263,7 +263,7 @@ void ServerLevel::tick()
 			}
 		}
 	}
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[3] = System::currentTimeMillis();
 #endif
 
@@ -281,7 +281,7 @@ void ServerLevel::tick()
 		save(false, nullptr);
 		PIXEndNamedEvent();
 	}
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[4] = System::currentTimeMillis();
 #endif
 
@@ -299,7 +299,7 @@ void ServerLevel::tick()
 			setDayTime(levelData->getDayTime() + 1);
 		}
 	}
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[5] = System::currentTimeMillis();
 #endif
 
@@ -307,7 +307,7 @@ void ServerLevel::tick()
 	// if (tickCount % 5 == 0) {
 	tickPendingTicks(false);
 	PIXEndNamedEvent();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[6] = System::currentTimeMillis();
 #endif
 
@@ -316,12 +316,12 @@ void ServerLevel::tick()
 	tickTiles();
 	MemSect(0);
 	PIXEndNamedEvent();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[7] = System::currentTimeMillis();
 #endif
 
 	chunkMap->tick();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[8] = System::currentTimeMillis();
 #endif
 
@@ -331,14 +331,14 @@ void ServerLevel::tick()
 	villageSiege->tick();
 	//MemSect(0);
 	PIXEndNamedEvent();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[9] = System::currentTimeMillis();
 #endif
 
 	PIXBeginNamedEvent(0,"Tick portal forcer");
 	portalForcer->tick(getGameTime());
 	PIXEndNamedEvent();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[10] = System::currentTimeMillis();
 #endif
 
@@ -346,13 +346,13 @@ void ServerLevel::tick()
 	PIXBeginNamedEvent(0,"runTileEvents");
 	runTileEvents();
 	PIXEndNamedEvent();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[11] = System::currentTimeMillis();
 #endif
 
 	// 4J Added
 	runQueuedSendTileUpdates();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	ts[12] = System::currentTimeMillis();
 	int64_t levelTotal = ts[12] - ts[0];
 	if (levelTotal > LEVEL_SLOW_THRESHOLD_MS)

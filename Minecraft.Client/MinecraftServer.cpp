@@ -1820,7 +1820,7 @@ void MinecraftServer::run(int64_t seed, void *lpParameter)
         int64_t unprocessedTime = 0;
         while (running && !s_bServerHalted)
         {
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
             // Full wall-clock cost of one run loop iteration (catch-up ticks
             // + setTime handlers + XUI delayed actions + Sleep).
             int64_t outerIterStart = getCurrentTimeMillis();
@@ -1863,20 +1863,20 @@ void MinecraftServer::run(int64_t seed, void *lpParameter)
                     while (unprocessedTime > MS_PER_TICK)
                     {
                         unprocessedTime -= MS_PER_TICK;
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
                         // Per-iteration pre/tick/post timing.
                         int64_t iter_t0 = System::currentTimeMillis();
 #endif
                         chunkPacketManagement_PreTick();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
                         int64_t iter_t1 = System::currentTimeMillis();
 #endif
                         tick();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
                         int64_t iter_t2 = System::currentTimeMillis();
 #endif
-                        chunkPacketManagement_PostTick();
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+                        chunkPacketManagement_PostTick(); 
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
                         int64_t iter_t3 = System::currentTimeMillis();
                         int64_t iter_total = iter_t3 - iter_t0;
                         outerIterTickWork += iter_total;
@@ -2197,7 +2197,7 @@ void MinecraftServer::run(int64_t seed, void *lpParameter)
             }
 
             Sleep(1);
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
             int64_t outerIterTotal = getCurrentTimeMillis() - outerIterStart;
 
             // Distribution histogram (gated). Buckets every outer iter, dumps
@@ -2462,8 +2462,8 @@ void MinecraftServer::tick()
 	//        logger.log(Level.WARNING, "Unexpected exception while parsing console command", e);
 	//    }
 
-	int64_t totalMs = System::currentTimeMillis() - tickStart;
 #if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+	int64_t totalMs = System::currentTimeMillis() - tickStart;
 	if (totalMs > TICK_SLOW_THRESHOLD_MS)
 	{
 		// Build a single one-line breakdown so it greps cleanly. Per-level:
@@ -2487,8 +2487,6 @@ void MinecraftServer::tick()
 			(long long)(afterPlayers - afterExtraW),
 			(long long)(afterConn    - afterPlayers));
 	}
-#else
-	(void)totalMs;
 #endif
 }
 

@@ -377,7 +377,7 @@ ServerLevel *PlayerChunkMap::getLevel()
 
 void PlayerChunkMap::tick()
 {
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	// Substep timing for slow chunkMap diagnostics.
 	const int64_t CHUNKMAP_SLOW_THRESHOLD_MS = 50;
 	int64_t cm_t0 = System::currentTimeMillis();
@@ -402,7 +402,7 @@ void PlayerChunkMap::tick()
             chunk->updateInhabitedTime();
         }
     }
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	int64_t cm_t1 = System::currentTimeMillis();
 #endif
 
@@ -424,7 +424,7 @@ void PlayerChunkMap::tick()
 			i++;
 		}
     }
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	int64_t cm_t2 = System::currentTimeMillis();
 #endif
 
@@ -432,7 +432,7 @@ void PlayerChunkMap::tick()
 	{
 		tickAddRequests(players[i]);
 	}
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD) && defined(MINECRAFT_SERVER_PROFILER)
 	int64_t cm_t3 = System::currentTimeMillis();
 	int64_t cm_total = cm_t3 - cm_t0;
 	if (cm_total > CHUNKMAP_SLOW_THRESHOLD_MS)
