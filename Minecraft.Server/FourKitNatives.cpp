@@ -48,9 +48,9 @@
 #include "Access/Access.h"
 #include "Common/NetworkUtils.h"
 #include "ServerLogManager.h"
-#include "../Minecraft.World/ItemInstance.cpp"
-
 #include "../Minecraft.World/Recipes.h"
+#include "../Minecraft.World/ItemInstance.cpp"
+#include <mutex>
 
 namespace
 {
@@ -113,6 +113,22 @@ class VirtualContainer : public SimpleContainer
 
 }
 
+class NativeFourKitTask;
+
+static int64_t STATIC_lastTick = -1;
+static std::unordered_map<int, std::shared_ptr<NativeFourKitTask>> _taskCache;
+static std::mutex _taskMutex;
+
+class NativeFourKitTask {
+public:
+    int startDelay;
+    int runCooldown;
+
+    int lastRunTick;
+
+    NativeFourKitTask(int _startDelay, int _runCooldown) : startDelay(_startDelay), runCooldown(_runCooldown), lastRunTick(-1) {};
+};
+
 namespace FourKitBridge
 {
 
@@ -131,6 +147,58 @@ int __cdecl NativeGetServerTickCount()
 {
     MinecraftServer *srv = MinecraftServer::getInstance();
     return srv ? srv->tickCount : 0;
+}
+
+void __cdecl NativeAddScheduler(int taskid, int startDelay, int runCooldown)
+{
+    std::lock_guard<std::mutex> g(_taskMutex);
+    _taskCache.emplace(taskid, std::make_shared<NativeFourKitTask>(startDelay, runCooldown));
+}
+
+void __cdecl NativeRemoveScheduler(int taskid)
+{
+    std::lock_guard<std::mutex> g(_taskMutex);
+    auto it = _taskCache.find(taskid);
+
+    if (it != _taskCache.end()) {
+        _taskCache.erase(it);
+    }
+}
+
+void ServerTickCallback(int currentTick)
+{
+    bool callManagedFunction = false;
+
+    if (STATIC_lastTick == -1) {
+        callManagedFunction = true;
+        STATIC_lastTick = currentTick;
+    }
+
+    {
+        std::lock_guard<std::mutex> g(_taskMutex);
+        for (const auto& [taskid, task] : _taskCache)
+        {
+            NativeFourKitTask* taskPointer = task.get();
+            if (taskPointer->startDelay > 0) {
+                taskPointer->startDelay -= (currentTick - STATIC_lastTick);
+
+                if (taskPointer->startDelay <= 0) {
+                    callManagedFunction = true; //make c# update the tasks so its not queued anymore but now its running
+                    taskPointer->startDelay = 0; //ensure it stays 0
+                }
+                continue;
+            }
+
+            int lastTaskTick = taskPointer->lastRunTick;
+            if (lastTaskTick == -1 || (lastTaskTick + taskPointer->runCooldown) <= currentTick) {
+                callManagedFunction = true;
+                taskPointer->lastRunTick = currentTick;
+            }
+        }
+    }
+
+    if (callManagedFunction) FireSchedulerCallback(currentTick);
+    STATIC_lastTick = currentTick;
 }
 
 void __cdecl NativeAddRecipe(unsigned char* recipeData)

@@ -5,6 +5,19 @@ namespace Minecraft.Server.FourKit;
 public static partial class FourKitHost
 {
     [UnmanagedCallersOnly]
+    public static void SetSchedulerCallbacks(IntPtr add, IntPtr remove)
+    {
+        try
+        {
+            NativeBridge.SetSchedulerCallbacks(add, remove);
+        }
+        catch (Exception ex)
+        {
+            ServerLog.Error("fourkit", $"SetSchedulerCallbacks error: {ex}");
+        }
+    }
+
+    [UnmanagedCallersOnly]
     public static void SetNativeCallbacks(IntPtr damage, IntPtr setHealth, IntPtr teleport, IntPtr setGameMode, IntPtr broadcastMessage, IntPtr setFallDistance, IntPtr getPlayerSnapshot, IntPtr sendMessage, IntPtr setWalkSpeed, IntPtr teleportEntity)
     {
         try

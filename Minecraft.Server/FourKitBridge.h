@@ -25,6 +25,7 @@ namespace FourKitBridge
     bool FirePlayerQuit(int entityId);
     bool FirePlayerKick(int entityId, int disconnectReason,
                         std::wstring &outLeaveMessage);
+    void FireSchedulerCallback(int currentTick);
     bool FirePlayerMove(int entityId,
                         double fromX, double fromY, double fromZ,
                         double toX, double toY, double toZ,
@@ -129,6 +130,7 @@ namespace FourKitBridge
         if (outToZ) *outToZ = toZ;
         return false;
     }
+    inline void FireSchedulerCallback(int currentTick) {};
     inline bool FireStructureGrow(int, int, int, int, int, bool = false, int = -1) { return false; }
     inline bool FirePlayerChat(int, const std::wstring&, std::wstring &outFormatted) { outFormatted.clear(); return false; }
     inline void UpdatePlayerEntityId(int, int) {}

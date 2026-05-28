@@ -30,6 +30,8 @@ typedef int(__stdcall *fn_fire_player_move)(int entityId,
                                             double fromX, double fromY, double fromZ,
                                             double toX, double toY, double toZ,
                                             double *outCoords);
+typedef void(__stdcall* fn_set_scheduler_callbacks)(void* add, void* remove);
+typedef void(__stdcall* fn_fire_scheduler_callback)(int currentTick);
 typedef void(__stdcall *fn_set_native_callbacks)(void *damage, void *setHealth, void *teleport, void *setGameMode, void *broadcastMessage, void *setFallDistance, void *getPlayerSnapshot, void *sendMessage, void *setWalkSpeed, void *teleportEntity);
 typedef void(__stdcall *fn_set_world_callbacks)(void *getTileId, void *getTileData, void *setTile, void *setTileData, void *breakBlock, void *getHighestBlockY, void *getWorldInfo, void *setWorldTime, void *setWeather, void *createExplosion, void *strikeLightning, void *setSpawnLocation, void *dropItem);
 typedef void(__stdcall *fn_update_entity_id)(int oldEntityId, int newEntityId);
@@ -127,6 +129,8 @@ static fn_update_entity_id s_managedUpdateEntityId = nullptr;
 static fn_fire_player_quit s_managedFireQuit = nullptr;
 static fn_fire_player_kick s_managedFireKick = nullptr;
 static fn_fire_player_move s_managedFireMove = nullptr;
+static fn_set_scheduler_callbacks s_managedSetSchedulerCallbacks = nullptr;
+static fn_fire_scheduler_callback s_managedFireSchedulerCallback = nullptr;
 static fn_set_native_callbacks s_managedSetCallbacks = nullptr;
 static fn_set_world_callbacks s_managedSetWorldCallbacks = nullptr;
 static fn_fire_structure_grow s_managedFireStructureGrow = nullptr;
@@ -215,6 +219,8 @@ void Initialize()
         {L"FirePlayerQuit", (void **)&s_managedFireQuit},
         {L"FirePlayerKick", (void **)&s_managedFireKick},
         {L"FirePlayerMove", (void **)&s_managedFireMove},
+        {L"SetSchedulerCallbacks", (void**)&s_managedSetSchedulerCallbacks},
+        {L"FireSchedulerCallback", (void**)&s_managedFireSchedulerCallback},
         {L"SetNativeCallbacks", (void **)&s_managedSetCallbacks},
         {L"SetWorldCallbacks", (void **)&s_managedSetWorldCallbacks},
         {L"UpdatePlayerEntityId", (void **)&s_managedUpdateEntityId},
@@ -274,6 +280,11 @@ void Initialize()
         LogError("fourkit", "Not all managed entry points resolved. FourKit will be disabled.");
         return;
     }
+
+    s_managedSetSchedulerCallbacks(
+        (void*)&NativeAddScheduler,
+        (void*)&NativeRemoveScheduler
+    );
 
     s_managedSetCallbacks(
         (void *)&NativeDamagePlayer,
@@ -523,6 +534,16 @@ void UpdatePlayerEntityId(int oldEntityId, int newEntityId)
     }
     s_managedUpdateEntityId(oldEntityId, newEntityId);
     LogDebugf("fourkit", "UpdatePlayerEntityId: %d -> %d", oldEntityId, newEntityId);
+}
+
+void FireSchedulerCallback(int currentTick)
+{
+    if (!s_initialized || !s_managedFireSchedulerCallback)
+    {
+        return;
+    }
+
+    s_managedFireSchedulerCallback(currentTick);
 }
 
 bool FirePlayerMove(int entityId,

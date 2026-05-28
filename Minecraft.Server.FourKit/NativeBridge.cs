@@ -11,6 +11,12 @@ internal static class NativeBridge
     internal delegate void NativeAddRecipeDelegate(IntPtr recipeData);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void NativeAddSchedulerDelegate(int taskid, int startDelay, int runCooldown);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void NativeRemoveSchedulerDelegate(int taskid);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeDamageDelegate(int entityId, float amount);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -117,12 +123,6 @@ internal static class NativeBridge
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeOpenVirtualContainerDelegate(int entityId, int nativeType, int slotCount, IntPtr itemsBuf);
-
-    //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    //internal delegate int NativeGetItemMetaDelegate(int entityId, int slot, IntPtr outBuf, int bufSize);
-
-    //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    //internal delegate void NativeSetItemMetaDelegate(int entityId, int slot, IntPtr inBuf, int bufSize);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void NativeSetHeldItemSlotDelegate(int entityId, int slot);
@@ -329,6 +329,15 @@ internal static class NativeBridge
     internal static NativeGetBlockLightDelegate? GetBlockLight;
     internal static NativeGetBiomeIdDelegate? GetBiomeId;
     internal static NativeSetBiomeIdDelegate? SetBiomeId;
+
+    internal static NativeAddSchedulerDelegate? AddScheduler;
+    internal static NativeRemoveSchedulerDelegate? RemoveScheduler;
+
+    internal static void SetSchedulerCallbacks(IntPtr addScheduler, IntPtr removeScheduler)
+    {
+        AddScheduler = Marshal.GetDelegateForFunctionPointer<NativeAddSchedulerDelegate>(addScheduler);
+        RemoveScheduler = Marshal.GetDelegateForFunctionPointer<NativeRemoveSchedulerDelegate>(removeScheduler);
+    }
 
     internal static void SetCallbacks(IntPtr damage, IntPtr setHealth, IntPtr teleport, IntPtr setGameMode, IntPtr broadcastMessage, IntPtr setFallDistance, IntPtr getPlayerSnapshot, IntPtr sendMessage, IntPtr setWalkSpeed, IntPtr teleportEntity)
     {

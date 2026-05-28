@@ -5,6 +5,7 @@ using Minecraft.Server.FourKit.Entity;
 using Minecraft.Server.FourKit.Event;
 using Minecraft.Server.FourKit.Inventory;
 using Minecraft.Server.FourKit.Plugin;
+using Minecraft.Server.FourKit.Scheduler;
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -132,6 +133,11 @@ public static class FourKit
         _dispatcher.Register(listener);
         //Console.WriteLine($"[FourKit] Registered listener: {listener.GetType().Name}");
     }
+
+    /// <summary>
+    /// Get fourkit scheduler instance
+    /// </summary>
+    public static FourKitScheduler getScheduler() => FourKitHost.getScheduler();
 
     /// <summary>
     /// Adds a recipe to the crafting manager.

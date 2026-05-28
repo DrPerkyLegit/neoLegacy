@@ -2,12 +2,14 @@
 using Minecraft.Server.FourKit.Entity;
 using Minecraft.Server.FourKit.Event.Inventory;
 using Minecraft.Server.FourKit.Inventory;
+using Minecraft.Server.FourKit.Scheduler;
 
 namespace Minecraft.Server.FourKit;
 
 public static partial class FourKitHost
 {
     internal static PluginLoader? s_loader;
+    internal static FourKitScheduler? s_scheduler;
 
     public static IReadOnlyList<Plugin.ServerPlugin> getLoadedPlugins() => s_loader?.Plugins ?? [];
 
@@ -16,6 +18,9 @@ public static partial class FourKitHost
     {
         try
         {
+            ServerLog.Info("fourkit", "Initializing scheduler...");
+            s_scheduler = new FourKitScheduler();
+
             ServerLog.Info("fourkit", "Initializing plugin system...");
 
             // Resolve plugins relative to the host process (Minecraft.Server.exe),
@@ -42,6 +47,17 @@ public static partial class FourKitHost
         {
             ServerLog.Error("fourkit", $"Initialize failed: {ex}");
         }
+    }
+
+    internal static FourKitScheduler getScheduler()
+    {
+        if (s_scheduler == null)
+        {
+            ServerLog.Warn("fourkit", "Scheduler accessed before initialization. Initializing now...");
+            s_scheduler = new FourKitScheduler();
+        }
+
+        return s_scheduler;
     }
 
     [UnmanagedCallersOnly]

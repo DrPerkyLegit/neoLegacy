@@ -191,6 +191,20 @@ public static partial class FourKitHost
     }
 
     [UnmanagedCallersOnly]
+    public static void FireSchedulerCallback(int currentTick)
+    {
+        try
+        {
+            FourKit.getScheduler().update(currentTick);
+        }
+        catch (Exception ex)
+        {
+            ServerLog.Error("fourkit", $"FireSchedulerCallback error: {ex}");
+            return;
+        }
+    }
+
+    [UnmanagedCallersOnly]
     public static int FirePlayerMove(int entityId,
         double fromX, double fromY, double fromZ,
         double toX, double toY, double toZ,

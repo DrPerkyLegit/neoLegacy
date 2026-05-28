@@ -66,6 +66,10 @@
 #include "Durango/Network/NetworkPlayerDurango.h"
 #endif
 
+#if defined(MINECRAFT_SERVER_BUILD)
+#include "..\Minecraft.Server\FourKitNatives.h"
+#endif
+
 #define DEBUG_SERVER_DONT_SPAWN_MOBS 0
 
 //4J Added
@@ -2449,6 +2453,14 @@ void MinecraftServer::tick()
 	PIXEndNamedEvent();
 	int64_t afterConn = System::currentTimeMillis();
 
+#if defined(MINECRAFT_SERVER_BUILD)
+	PIXBeginNamedEvent(0, "FourKit Scheduler tick");
+	FourKitBridge::ServerTickCallback(tickCount);
+	PIXEndNamedEvent();
+#endif
+	int64_t afterScheduler = System::currentTimeMillis();
+
+
 	// 4J - removed
 #if 0
 	for (size_t i = 0; i < tickables.size(); i++) {
@@ -2480,12 +2492,13 @@ void MinecraftServer::tick()
 				(long long)lvlTrkMs[i]);
 		}
 		ServerRuntime::LogInfof("perf",
-			"slow tick total=%lldms%s | extraW=%lld players=%lld conn=%lld",
+			"slow tick total=%lldms%s | extraW=%lld players=%lld conn=%lld fourkit_scheduler=%lld",
 			(long long)totalMs,
 			buf,
 			(long long)(afterExtraW  - afterLevels),
 			(long long)(afterPlayers - afterExtraW),
-			(long long)(afterConn    - afterPlayers));
+			(long long)(afterConn    - afterPlayers),
+			(long long)(afterPlayers - afterScheduler));
 	}
 #endif
 }

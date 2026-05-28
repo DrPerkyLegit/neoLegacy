@@ -24,6 +24,12 @@ namespace FourKitBridge
     int __cdecl NativeGetServerTickCount();
     void __cdecl NativeAddRecipe(unsigned char* recipeData);
 
+    //scheduler
+    void __cdecl NativeAddScheduler(int taskid, int startDelay, int runCooldown);
+    void __cdecl NativeRemoveScheduler(int taskid);
+
+    void ServerTickCallback(int currentTick);
+
     // core
     void __cdecl NativeDamagePlayer(int entityId, float amount);
     void __cdecl NativeSetPlayerHealth(int entityId, float health);
