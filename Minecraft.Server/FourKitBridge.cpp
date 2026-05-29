@@ -424,6 +424,10 @@ void FireWorldSave()
     LogDebugf("fourkit", "Fired WorldSave");
 }
 
+void ServerTickCallback(int currentTick) {
+    FourKitBridge::NativeServerTickCallback(currentTick);
+}
+
 bool FirePlayerPreLogin(const std::wstring& name, const std::string& ip, int port)
 {
     if (!s_initialized || !s_managedFirePreLogin)

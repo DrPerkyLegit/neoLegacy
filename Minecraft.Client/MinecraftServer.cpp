@@ -67,7 +67,7 @@
 #endif
 
 #if defined(MINECRAFT_SERVER_BUILD)
-#include "..\Minecraft.Server\FourKitNatives.h"
+#include "..\Minecraft.Server\FourKitBridge.h"
 #endif
 
 #define DEBUG_SERVER_DONT_SPAWN_MOBS 0

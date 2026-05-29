@@ -165,7 +165,7 @@ void __cdecl NativeRemoveScheduler(int taskid)
     }
 }
 
-void ServerTickCallback(int currentTick)
+void NativeServerTickCallback(int currentTick)
 {
     bool callManagedFunction = false;
 

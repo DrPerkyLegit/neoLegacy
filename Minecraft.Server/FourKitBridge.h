@@ -36,6 +36,8 @@ namespace FourKitBridge
                         std::wstring &outFormatted);
     void UpdatePlayerEntityId(int oldEntityId, int newEntityId);
 
+    void ServerTickCallback(int currentTick);
+
     int GetTileId(int dimId, int x, int y, int z);
     int GetTileData(int dimId, int x, int y, int z);
     void SetTile(int dimId, int x, int y, int z, int tileId, int data);

@@ -28,7 +28,7 @@ namespace FourKitBridge
     void __cdecl NativeAddScheduler(int taskid, int startDelay, int runCooldown);
     void __cdecl NativeRemoveScheduler(int taskid);
 
-    void ServerTickCallback(int currentTick);
+    void NativeServerTickCallback(int currentTick);
 
     // core
     void __cdecl NativeDamagePlayer(int entityId, float amount);
