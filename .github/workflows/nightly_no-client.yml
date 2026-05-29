@@ -1,0 +1,272 @@
+name: Server Nightly Builds
+
+on:
+  push:
+    branches:
+      - neofourkit
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: nightly-server-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-server-vanilla:
+    name: Build Vanilla Server
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Run CMake
+        uses: lukka/run-cmake@v10
+        env:
+          VCPKG_ROOT: ""
+        with:
+          configurePreset: windows64
+          buildPreset: windows64-release
+          buildPresetAdditionalArgs: "['--target', 'Minecraft.Server']"
+
+      - name: Zip Vanilla Build
+        shell: pwsh
+        run: |
+          $source = "./build/windows64/Minecraft.Server/Release"
+          $zip = "neoLegacyServerWindows64.zip"
+          $topLevel = "neoLegacyServerWindows64"
+
+          $files = Get-ChildItem -Path $source -Recurse -File |
+            Where-Object { $_.Extension -notin '.pch', '.zip', '.ipdb', '.iobj' }
+
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+          $basePath = (Resolve-Path $source).Path
+          $fs = [System.IO.File]::Open($zip, [System.IO.FileMode]::Create)
+
+          try {
+            $archive = New-Object System.IO.Compression.ZipArchive(
+              $fs,
+              [System.IO.Compression.ZipArchiveMode]::Create
+            )
+
+            try {
+              Get-ChildItem -Path $basePath -Recurse -Directory | ForEach-Object {
+                $rel = $_.FullName.Substring($basePath.Length).TrimStart('\', '/')
+                $archive.CreateEntry("$topLevel/$($rel -replace '\\','/')/") | Out-Null
+              }
+
+              foreach ($file in $files) {
+                $rel = $file.FullName.Substring($basePath.Length).TrimStart('\', '/')
+                $entryName = "$topLevel/$($rel -replace '\\','/')"
+
+                [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                  $archive,
+                  $file.FullName,
+                  $entryName,
+                  [System.IO.Compression.CompressionLevel]::Optimal
+                ) | Out-Null
+              }
+            }
+            finally {
+              $archive.Dispose()
+            }
+          }
+          finally {
+            $fs.Dispose()
+          }
+
+          Write-Host "Created $zip"
+
+      - name: Upload Vanilla Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: vanilla-server
+          path: neoLegacyServerWindows64.zip
+
+  build-server-fourkit:
+    name: Build FourKit Server
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Run CMake
+        uses: lukka/run-cmake@v10
+        env:
+          VCPKG_ROOT: ""
+        with:
+          configurePreset: windows64
+          buildPreset: windows64-release
+          buildPresetAdditionalArgs: "['--target', 'Minecraft.Server', '--target', 'Minecraft.Server.FourKit']"
+
+      - name: Zip FourKit Build
+        shell: pwsh
+        run: |
+          $source = "./build/windows64/Minecraft.Server.FourKit/Release"
+          $zip = "neoLegacyServerWindows64-FourKit.zip"
+          $topLevel = "neoLegacyServerWindows64-FourKit"
+
+          $files = Get-ChildItem -Path $source -Recurse -File |
+            Where-Object { $_.Extension -notin '.pch', '.zip', '.ipdb', '.iobj' }
+
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+          $basePath = (Resolve-Path $source).Path
+          $fs = [System.IO.File]::Open($zip, [System.IO.FileMode]::Create)
+
+          try {
+            $archive = New-Object System.IO.Compression.ZipArchive(
+              $fs,
+              [System.IO.Compression.ZipArchiveMode]::Create
+            )
+
+            try {
+              Get-ChildItem -Path $basePath -Recurse -Directory | ForEach-Object {
+                $rel = $_.FullName.Substring($basePath.Length).TrimStart('\', '/')
+                $archive.CreateEntry("$topLevel/$($rel -replace '\\','/')/") | Out-Null
+              }
+
+              foreach ($file in $files) {
+                $rel = $file.FullName.Substring($basePath.Length).TrimStart('\', '/')
+                $entryName = "$topLevel/$($rel -replace '\\','/')"
+
+                [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                  $archive,
+                  $file.FullName,
+                  $entryName,
+                  [System.IO.Compression.CompressionLevel]::Optimal
+                ) | Out-Null
+              }
+            }
+            finally {
+              $archive.Dispose()
+            }
+          }
+          finally {
+            $fs.Dispose()
+          }
+
+          Write-Host "Created $zip"
+
+      - name: Upload FourKit Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: fourkit-server
+          path: neoLegacyServerWindows64-FourKit.zip
+
+  release-server:
+    name: Release Server Builds
+    needs:
+      - build-server-vanilla
+      - build-server-fourkit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download Vanilla Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: vanilla-server
+          path: artifacts
+
+      - name: Download FourKit Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: fourkit-server
+          path: artifacts
+
+      - name: Attest artifacts
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            artifacts/neoLegacyServerWindows64.zip
+            artifacts/neoLegacyServerWindows64-FourKit.zip
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(echo '${{ github.sha }}' | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
+      - name: Delete old release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete Nightly-Dedicated-Server --yes || true
+
+      - name: Delete old tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api repos/${{ github.repository }}/git/refs/tags/Nightly-Dedicated-Server --method DELETE || true
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -f Nightly-Dedicated-Server \
+            -m "Nightly server release ${{ steps.sha.outputs.short }}"
+
+          git push origin Nightly-Dedicated-Server --force
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create Nightly-Dedicated-Server artifacts/* \
+            --title "Server: ${{ steps.sha.outputs.short }}" \
+            --notes "Dedicated Server runtime for Windows64.
+
+          Two flavours are attached:
+          - neoLegacyServerWindows64.zip: vanilla server.
+          - neoLegacyServerWindows64-FourKit.zip: FourKit-enabled server." \
+            --latest=false \
+            --prerelease=true
+
+  cleanup:
+    name: Cleanup Artifacts
+    if: always()
+    needs:
+      - release-server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cleanup artifacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            vanilla-server
+            fourkit-server
