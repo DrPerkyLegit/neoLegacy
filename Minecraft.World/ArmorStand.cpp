@@ -45,6 +45,10 @@ void ArmorStand::init()
     for (int i = 0; i < equipmentCount; i++)
         equipment[i] = nullptr;
 
+    rotateElytraX = 0.2617994f;
+    rotateElytraY = 0.0f;
+    rotateElytraZ = -0.2617994f;
+
     headPose     = DEFAULT_HEAD_POSE;
     bodyPose     = DEFAULT_BODY_POSE;
     leftArmPose  = DEFAULT_LEFT_ARM_POSE;

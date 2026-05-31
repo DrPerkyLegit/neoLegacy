@@ -16,6 +16,7 @@
 #include "PlayerRenderer.h"
 #include "../Minecraft.World/SkullItem.h"
 #include "../Minecraft.World/SkullTileEntity.h"
+#include "../Minecraft.World/ElytraItem.h"
 
 static const float DEG_TO_RAD = 3.14159265f / 180.0f;
 
@@ -178,6 +179,46 @@ void ArmorStandRenderer::renderModel(shared_ptr<LivingEntity> mob,
 
 void ArmorStandRenderer::additionalRendering(shared_ptr<LivingEntity> mob, float a)
 {
+
+    {
+        shared_ptr<ItemInstance> chestItem = mob->getEquipmentSlots()[ArmorStand::SLOT_CHEST];
+        if (chestItem != nullptr && dynamic_cast<ElytraItem*>(chestItem->getItem()) != nullptr)
+        {
+            static ResourceLocation elytraTexture(L"item/elytra.png");
+            bindTexture(&elytraTexture);
+
+            float brightness2 = SharedConstants::TEXTURE_LIGHTING ? 1 : mob->getBrightness(a);
+            glColor3f(brightness2, brightness2, brightness2);
+
+            ArmorStandModel* standModel = ((ArmorStandModel*)this->model);
+            ArmorStand* stand = dynamic_cast<ArmorStand*>(mob.get());
+
+            float wf = 0.2617994f;
+            float wf1 = -0.2617994f;
+            float wf2 = standModel->body->y;
+            float wf3 = 0.0f;
+
+            stand->rotateElytraX += (wf - stand->rotateElytraX) * 0.3f;
+            stand->rotateElytraY += (wf3 - stand->rotateElytraY) * 0.3f;
+            stand->rotateElytraZ += (wf1 - stand->rotateElytraZ) * 0.3f;
+
+
+            standModel->elytraRight->y = wf2;
+            standModel->elytraRight->xRot = stand->rotateElytraX;
+            standModel->elytraRight->yRot = stand->rotateElytraY;
+            standModel->elytraRight->zRot = stand->rotateElytraZ;
+
+            standModel->elytraLeft->y = wf2;
+            standModel->elytraLeft->xRot = stand->rotateElytraX;
+            standModel->elytraLeft->yRot = -stand->rotateElytraY;
+            standModel->elytraLeft->zRot = -stand->rotateElytraZ;
+
+            glPushMatrix();
+            glTranslatef(0, 0.0f, (2.0f + 0.125f) / 16.0f);
+            standModel->renderElytra(1 / 16.0f, true);
+            glPopMatrix();
+        }
+    }
 
     std::shared_ptr<ItemInstance> item = mob->getCarriedItem();
     if (item != nullptr)
