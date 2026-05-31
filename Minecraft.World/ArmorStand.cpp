@@ -87,7 +87,7 @@ void ArmorStand::defineSynchedData()
 
 ArmorStand::~ArmorStand() {}
 
-bool ArmorStand::hasPhysics()    const { return (entityData->getByte(DATA_CLIENT_FLAGS) & FLAG_NO_GRAVITY) == 0;  }
+
 bool ArmorStand::isBaby()        const { return (entityData->getByte(DATA_CLIENT_FLAGS) & FLAG_SMALL)       != 0; }
 bool ArmorStand::isSmall()       const { return isBaby(); }
 bool ArmorStand::isShowArms()    const { return (entityData->getByte(DATA_CLIENT_FLAGS) & FLAG_SHOW_ARMS)   != 0; }
@@ -196,17 +196,17 @@ void ArmorStand::updateInvisibilityStatus()
 void ArmorStand::tick()
 {
     float lockedRot = this->yRot;
-    if (hasPhysics()) LivingEntity::tick();
+    LivingEntity::tick();
     if (onGround)
     {
-        BlockPos pos((int)floorf(x), (int)floorf(y) - 1, (int)floorf(z));
-        int blockId = level->getTile(pos.getX(), pos.getY(), pos.getZ());
-        if (blockId == Tile::topSnow->id)
-        {
-            int meta = level->getData(pos.getX(), pos.getY(), pos.getZ());
-            float snowHeight = ((meta & 0x7) + 1) * 0.125f;
-            moveTo(x, floorf(y) + snowHeight, z, yRot, xRot);
-        }
+    BlockPos pos((int)floorf(x), (int)floorf(y) - 1, (int)floorf(z));
+    int blockId = level->getTile(pos.getX(), pos.getY(), pos.getZ());
+    if (blockId == Tile::topSnow->id)
+    {
+        int meta = level->getData(pos.getX(), pos.getY(), pos.getZ());
+        float snowHeight = ((meta & 0x7) + 1) * 0.125f;
+        moveTo(x, floorf(y) + snowHeight, z, yRot, xRot);
+    }
     }
     this->yRot      = lockedRot;
     this->yRotO     = lockedRot;

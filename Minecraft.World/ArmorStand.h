@@ -68,7 +68,6 @@ public:
     explicit ArmorStand(Level* level);
     virtual ~ArmorStand();
 
-    bool hasPhysics()    const;
     bool isBaby()        const;
     bool isSmall()       const;
     bool isShowArms()    const;
