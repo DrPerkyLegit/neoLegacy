@@ -47,5 +47,7 @@ public:
                              float headRotMinusBodyRot,
                              float headRotx, float scale) override;
     virtual int  prepareArmor(shared_ptr<LivingEntity> mob, int layer, float a) override;
+    void prepareCarriedItem(shared_ptr<Entity> mob, shared_ptr<ItemInstance> item);
+
     virtual void additionalRendering(shared_ptr<LivingEntity> mob, float a) override;
 };
