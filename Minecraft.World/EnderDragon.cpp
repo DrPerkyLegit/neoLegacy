@@ -1170,7 +1170,13 @@ bool EnderDragon::hurt(shared_ptr<MultiEntityMobPart> MultiEntityMobPart, Damage
 
 bool EnderDragon::hurt(DamageSource *source, float damage)
 {
-	return false;
+	if (source == DamageSource::outOfWorld)
+    {
+        setSynchedAction(e_EnderdragonAction_Sitting_Scanning, true);
+        reallyHurt(source, getMaxHealth() + 1);
+        return true;
+    }
+    return false;
 }
 
 bool EnderDragon::reallyHurt(DamageSource *source, float damage)
