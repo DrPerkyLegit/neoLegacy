@@ -147,6 +147,8 @@ public:
     void updateBoundingBox(bool markerMode);
     void updateInvisibilityStatus();
 
+    virtual void travel(float xz, float ya);
+
     virtual shared_ptr<ItemInstance> getCarriedItem()                                    override;
     virtual shared_ptr<ItemInstance> getCarried(int slot)                                override;
     virtual shared_ptr<ItemInstance> getArmor(int pos)                                  override;

@@ -51,9 +51,10 @@ public:
 	static const int DATA_ARROW_COUNT_ID = 9;
 
 private:
-	BaseAttributeMap* attributes;
 	CombatTracker* combatTracker;
 	unordered_map<int, MobEffectInstance*> activeEffects;
+protected:
+	BaseAttributeMap* attributes;
 	ItemInstanceArray lastEquipment;
 
 public:
