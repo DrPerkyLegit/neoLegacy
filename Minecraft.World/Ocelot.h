@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TamableAnimal.h"
+#include "AvoidPlayerGoal.h"
 
 class TemptGoal;
 
@@ -32,6 +33,7 @@ public:
 
 private:
 	TemptGoal *temptGoal;
+	AvoidPlayerGoal *avoidPlayerGoal;
 
 public:
 	Ocelot(Level *level);
@@ -41,6 +43,8 @@ protected:
 
 public:
 	virtual void serverAiMobStep();
+	virtual void reassessTameGoals();
+	virtual void setTame(bool tame);
 
 protected:
 	virtual bool removeWhenFarAway();
@@ -78,6 +82,7 @@ public:
 	virtual int getCatType();
 	virtual void setCatType(int type);
 	virtual bool canSpawn();
+	//virtual bool checkSpawnObstruction(); TODO when blockstates will be merged.
 	virtual wstring getAName();
 	virtual MobGroupData *finalizeMobSpawn(MobGroupData *groupData, int extraData = 0); // 4J Added extraData param
 

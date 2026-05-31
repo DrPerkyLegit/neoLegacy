@@ -19,8 +19,8 @@
 
 const Rotations ArmorStand::DEFAULT_HEAD_POSE      (0.0f, 0.0f, 0.0f);
 const Rotations ArmorStand::DEFAULT_BODY_POSE      (0.0f, 0.0f, 0.0f);
-const Rotations ArmorStand::DEFAULT_LEFT_ARM_POSE  (-10.0f, 0.0f, -10.0f);
-const Rotations ArmorStand::DEFAULT_RIGHT_ARM_POSE (-15.0f, 0.0f, 10.0f);
+const Rotations ArmorStand::DEFAULT_LEFT_ARM_POSE  (-15.0f, 0.0f, 10.0f);
+const Rotations ArmorStand::DEFAULT_RIGHT_ARM_POSE (-10.0f, 0.0f, -10.0f);
 const Rotations ArmorStand::DEFAULT_LEFT_LEG_POSE  (-1.0f, 0.0f, -1.0f);
 const Rotations ArmorStand::DEFAULT_RIGHT_LEG_POSE (1.0f, 0.0f, 1.0f);
 
@@ -44,6 +44,10 @@ void ArmorStand::init()
     heightOffset = 0.0f;
     for (int i = 0; i < equipmentCount; i++)
         equipment[i] = nullptr;
+
+    rotateElytraX = 0.2617994f;
+    rotateElytraY = 0.0f;
+    rotateElytraZ = -0.2617994f;
 
     headPose     = DEFAULT_HEAD_POSE;
     bodyPose     = DEFAULT_BODY_POSE;

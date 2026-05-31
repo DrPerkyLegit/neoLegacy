@@ -35,13 +35,16 @@ Ocelot::Ocelot(Level *level) : TamableAnimal(level)
 	registerAttributes();
 	setHealth(getMaxHealth());
 
+	avoidPlayerGoal = nullptr;
+
+	reassessTameGoals();
+
 	setSize(0.6f, 0.8f);
 
 	getNavigation()->setAvoidWater(true);
 	goalSelector.addGoal(1, new FloatGoal(this));
 	goalSelector.addGoal(2, sitGoal, false);
 	goalSelector.addGoal(3, temptGoal = new TemptGoal(this, SNEAK_SPEED_MOD, Item::fish_raw_Id, true), false);
-	goalSelector.addGoal(4, new AvoidPlayerGoal(this, typeid(Player), 16, WALK_SPEED_MOD, SPRINT_SPEED_MOD));
 	goalSelector.addGoal(5, new FollowOwnerGoal(this, FOLLOW_SPEED_MOD, 10, 5));
 	goalSelector.addGoal(6, new OcelotSitOnTileGoal(this, SPRINT_SPEED_MOD));
 	goalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.3f));
@@ -58,6 +61,21 @@ void Ocelot::defineSynchedData()
 	TamableAnimal::defineSynchedData();
 
 	entityData->define(DATA_TYPE_ID, static_cast<byte>(0));
+}
+
+void Ocelot::reassessTameGoals()
+{
+	if (!avoidPlayerGoal)
+		avoidPlayerGoal = new AvoidPlayerGoal(this, typeid(Player), 16, WALK_SPEED_MOD, SPRINT_SPEED_MOD);
+
+	goalSelector.removeGoal(avoidPlayerGoal);
+	if (!isTame())
+		goalSelector.addGoal(4, avoidPlayerGoal, false);
+}
+
+void Ocelot::setTame(bool tame)
+{
+	TamableAnimal::setTame(tame);
 }
 
 void Ocelot::serverAiMobStep()
@@ -199,7 +217,10 @@ bool Ocelot::mobInteract(shared_ptr<Player> player)
 	}
 	else
 	{
-		if (/*temptGoal->isRunning() &&*/ item != nullptr && item->id == Item::fish_raw_Id && player->distanceToSqr(shared_from_this()) < 3 * 3)
+		//player must be close holding raw fish
+		// temptGoal->isRunning() check removed
+		// when the player enters interaction range, which would block taming entirely
+		if (item != nullptr && item->id == Item::fish_raw_Id && player->distanceToSqr(shared_from_this()) < 3 * 3)
 		{
 			// 4J-PB - don't lose the fish in creative mode
 			if (!player->abilities.instabuild) item->count--;
@@ -284,6 +305,8 @@ void Ocelot::setCatType(int type)
 
 bool Ocelot::canSpawn()
 {
+	
+	//return level->random->nextInt(3) != 0; when checkSpawnObstruction is implemented
 	// artificially make ozelots more rare
 	if (level->random->nextInt(3) == 0)
 	{
