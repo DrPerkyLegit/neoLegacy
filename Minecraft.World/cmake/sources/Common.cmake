@@ -204,6 +204,8 @@ set(_MINECRAFT_WORLD_COMMON_NET_MINECRAFT_COMMANDS_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/ToggleDownfallCommand.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/WeatherCommand.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/net.minecraft.commands.common.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/EntityTypeMap.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/EntityTypeMap.cpp"
 )
 source_group("net/minecraft/commands/common" FILES ${_MINECRAFT_WORLD_COMMON_NET_MINECRAFT_COMMANDS_COMMON})
 
