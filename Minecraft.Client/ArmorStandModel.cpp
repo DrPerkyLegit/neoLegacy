@@ -8,7 +8,6 @@ ArmorStandModel::ArmorStandModel(float scale) : HumanoidModel(scale)
 {
     texWidth  = 64;
     texHeight = 64;
-
     
     head = new ModelPart(this, 0, 0);
     head->addBox(-1.0f, -7.0f, -1.0f, 2, 7, 2, scale);

@@ -56,6 +56,10 @@ private:
     bool isMarkerFlag;
     bool noPhysics;
     float standDamage;
+public:
+    float rotateElytraX;
+    float rotateElytraY;
+    float rotateElytraZ;
 
 public:
     long long lastHit;

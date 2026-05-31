@@ -16,6 +16,7 @@
 #include "PlayerRenderer.h"
 #include "../Minecraft.World/SkullItem.h"
 #include "../Minecraft.World/SkullTileEntity.h"
+#include "../Minecraft.World/ElytraItem.h"
 
 static const float DEG_TO_RAD = 3.14159265f / 180.0f;
 
@@ -84,7 +85,20 @@ void ArmorStandRenderer::render(shared_ptr<Entity> entity,
                                 double x, double y, double z,
                                 float rot, float a)
 {
+    shared_ptr<LivingEntity> mob = dynamic_pointer_cast<LivingEntity>(entity);
+
+    float brightness = SharedConstants::TEXTURE_LIGHTING ? 1 : mob->getBrightness(a);
+    glColor3f(brightness, brightness, brightness);
+    shared_ptr<ItemInstance> item = mob->getCarriedItem();
+
+    prepareCarriedItem(mob, item);
+
     LivingEntityRenderer::render(entity, x, y, z, rot, a);
+}
+
+void ArmorStandRenderer::prepareCarriedItem(shared_ptr<Entity> mob, shared_ptr<ItemInstance> item)
+{
+    armorLayer->armorModel1->holdingRightHand = armorLayer->armorModel2->holdingRightHand = item != nullptr ? 1 : 0;
 }
 
 void ArmorStandRenderer::renderModel(shared_ptr<LivingEntity> mob,
@@ -165,7 +179,109 @@ void ArmorStandRenderer::renderModel(shared_ptr<LivingEntity> mob,
 
 void ArmorStandRenderer::additionalRendering(shared_ptr<LivingEntity> mob, float a)
 {
-    
+
+    {
+        shared_ptr<ItemInstance> chestItem = mob->getEquipmentSlots()[ArmorStand::SLOT_CHEST];
+        if (chestItem != nullptr && dynamic_cast<ElytraItem*>(chestItem->getItem()) != nullptr)
+        {
+            static ResourceLocation elytraTexture(L"item/elytra.png");
+            bindTexture(&elytraTexture);
+
+            float brightness2 = SharedConstants::TEXTURE_LIGHTING ? 1 : mob->getBrightness(a);
+            glColor3f(brightness2, brightness2, brightness2);
+
+            ArmorStandModel* standModel = ((ArmorStandModel*)this->model);
+            ArmorStand* stand = dynamic_cast<ArmorStand*>(mob.get());
+
+            float wf = 0.2617994f;
+            float wf1 = -0.2617994f;
+            float wf2 = standModel->body->y;
+            float wf3 = 0.0f;
+
+            stand->rotateElytraX += (wf - stand->rotateElytraX) * 0.3f;
+            stand->rotateElytraY += (wf3 - stand->rotateElytraY) * 0.3f;
+            stand->rotateElytraZ += (wf1 - stand->rotateElytraZ) * 0.3f;
+
+
+            standModel->elytraRight->y = wf2;
+            standModel->elytraRight->xRot = stand->rotateElytraX;
+            standModel->elytraRight->yRot = stand->rotateElytraY;
+            standModel->elytraRight->zRot = stand->rotateElytraZ;
+
+            standModel->elytraLeft->y = wf2;
+            standModel->elytraLeft->xRot = stand->rotateElytraX;
+            standModel->elytraLeft->yRot = -stand->rotateElytraY;
+            standModel->elytraLeft->zRot = -stand->rotateElytraZ;
+
+            glPushMatrix();
+            glTranslatef(0, 0.0f, (2.0f + 0.125f) / 16.0f);
+            standModel->renderElytra(1 / 16.0f, true);
+            glPopMatrix();
+        }
+    }
+
+    std::shared_ptr<ItemInstance> item = mob->getCarriedItem();
+    if (item != nullptr)
+    {
+        glPushMatrix();
+
+        ArmorStandModel* standModel = ((ArmorStandModel*)model);
+
+        if (standModel->young) {
+            float s = 0.5f;
+            glTranslatef(0 / 16.0f, 10 / 16.0f, 0 / 16.0f);
+            glRotatef(-20, -1, 0, 0);
+            glScalef(s, s, s);
+        }
+
+        
+        standModel->arm1->translateTo(1 / 16.0f);
+        glTranslatef(-1 / 16.0f, 7 / 16.0f, 1 / 16.0f);
+
+        if (item->id < 256 && TileRenderer::canRender(Tile::tiles[item->id]->getRenderShape()) && item->id != Tile::barrier_Id)
+        {
+            float s = 8 / 16.0f;
+            glTranslatef(-0 / 16.0f, 3 / 16.0f, -5 / 16.0f);
+            s *= 0.75f;
+            glRotatef(20, 1, 0, 0);
+            glRotatef(45, 0, 1, 0);
+            glScalef(-s, -s, s);
+        }
+        else if (item->id == Item::bow_Id)
+        {
+            float s = 10 / 16.0f;
+            glTranslatef(0 / 16.0f, 2 / 16.0f, 5 / 16.0f);
+            glRotatef(-20, 0, 1, 0);
+            glScalef(s, -s, s);
+            glRotatef(-100, 1, 0, 0);
+            glRotatef(45, 0, 1, 0);
+        }
+        else if (Item::items[item->id]->isHandEquipped())
+        {
+            float s = 10 / 16.0f;
+            glTranslatef(0, 3 / 16.0f, 0);
+            glScalef(s, -s, s);
+            glRotatef(-100, 1, 0, 0);
+            glRotatef(45, 0, 1, 0);
+        }
+        else
+        {
+            float s = 6 / 16.0f;
+            glTranslatef(+4 / 16.0f, +3 / 16.0f, -3 / 16.0f);
+            glScalef(s, s, s);
+            glRotatef(60, 0, 0, 1);
+            glRotatef(-90, 1, 0, 0);
+            glRotatef(20, 0, 0, 1);
+        }
+
+        this->entityRenderDispatcher->itemInHandRenderer->renderItem(mob, item, 0);
+        if (item->getItem()->hasMultipleSpriteLayers())
+        {
+            this->entityRenderDispatcher->itemInHandRenderer->renderItem(mob, item, 1);
+        }
+
+        glPopMatrix();
+    }
 }
 
 
