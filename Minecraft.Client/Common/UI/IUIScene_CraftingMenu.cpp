@@ -916,7 +916,7 @@ void IUIScene_CraftingMenu::UpdateHighlight()
 
 		// special case for the torch coal/charcoal
 		int id=pTempItemInstAdditional->getDescriptionId();
-		LPCWSTR itemstring;
+		wstring itemstring;
 
 		switch(id)
 		{
@@ -945,11 +945,15 @@ void IUIScene_CraftingMenu::UpdateHighlight()
 			}
 			break;
 		default:
-			itemstring=app.GetString(id  );
+			if (pTempItemInstAdditional->hasCustomHoverName()) {
+				itemstring = pTempItemInstAdditional->getHoverName();
+			} else {
+				itemstring = app.GetString(id);
+			}
 			break;
 		}
 
-		setItemText(itemstring);
+		setItemText(itemstring.c_str());
 	}
 	else
 	{

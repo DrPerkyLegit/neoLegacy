@@ -38,6 +38,8 @@ void ClothDyeRecipes::addRecipes(Recipes *r)
 	}
 
 	// some dye recipes
+	
+	//flowers
 	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::YELLOW),
 		L"tg", 
 		Tile::flower,L'D');
@@ -45,6 +47,44 @@ void ClothDyeRecipes::addRecipes(Recipes *r)
 	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::RED),
 		L"tg", 
 		Tile::rose,L'D');
+
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::LIGHT_BLUE),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::BLUE_ORCHID), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::MAGENTA),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::ALLIUM), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::SILVER),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::AZURE_BLUET), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::RED),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::RED_TULIP), L'D');
+
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::PINK),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::PINK_TULIP), L'D');
+
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::SILVER),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::WHITE_TULIP), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::ORANGE),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::ORANGE_TULIP), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 1, DyePowderItem::SILVER),
+	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::OXEYE_DAISY), L'D');
+	
+	// Tall flowers
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 2, DyePowderItem::YELLOW),
+	    L"zg", new ItemInstance(Item::items[Tile::tallgrass2_Id], 1, TallGrass2::SUNFLOWER), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 2, DyePowderItem::MAGENTA),
+	    L"zg", new ItemInstance(Item::items[Tile::tallgrass2_Id], 1, TallGrass2::LILAC), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 2, DyePowderItem::RED),
+	    L"zg", new ItemInstance(Item::items[Tile::tallgrass2_Id], 1, TallGrass2::ROSE_BUSH), L'D');
+	
+	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 2, DyePowderItem::MAGENTA),
+	    L"zg", new ItemInstance(Item::items[Tile::tallgrass2_Id], 1, TallGrass2::PEONY), L'D');
+
 
 	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 3, DyePowderItem::WHITE),
 		L"ig", 
@@ -113,6 +153,9 @@ void ClothDyeRecipes::addRecipes(Recipes *r)
 		new ItemInstance(Item::dye_powder, 1, DyePowderItem::RED), 
 		new ItemInstance(Item::dye_powder, 1, DyePowderItem::RED),
 		new ItemInstance(Item::dye_powder, 1, DyePowderItem::WHITE),L'D');
+
+
+
 
 	for (int i = 0; i < 16; i++)
 	{
