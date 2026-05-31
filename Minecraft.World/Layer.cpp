@@ -29,6 +29,7 @@ LayerArray Layer::getDefaultLayers(int64_t seed, LevelType* levelType, void* sup
     islandLayer = std::make_shared<AddIslandLayer>(seed, islandLayer, 0x32);
     islandLayer = std::make_shared<AddIslandLayer>(seed, islandLayer, 0x46);
     islandLayer = std::make_shared<RemoveTooMuchOceanLayer>(seed, islandLayer, 2);
+    islandLayer = std::make_shared<RemoveTooMuchOceanLayer>(seed, islandLayer, 2);
     islandLayer = std::make_shared<AddSnowLayer>(seed, islandLayer, 2);
     islandLayer = std::make_shared<AddIslandLayer>(seed, islandLayer, 3);
     islandLayer = std::make_shared<AddEdgeLayer>(seed, islandLayer, 2, 0);
@@ -45,7 +46,7 @@ LayerArray Layer::getDefaultLayers(int64_t seed, LevelType* levelType, void* sup
     shared_ptr<Layer> baseLayer = ZoomLayer::zoom(seed, islandLayer, 0x3E8, 0);
 
     int zoomLevel = 4;
-    int riverZoomCount = 4;
+    int riverZoomCount = 6;
   
     if (levelType == LevelType::lvl_customized && superflatConfig != nullptr)
     {
