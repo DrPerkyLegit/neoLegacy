@@ -16,6 +16,7 @@
 #include "ParticleTypes.h"
 #include "Random.h"
 #include "AABB.h"
+#include "../Minecraft.World/LevelChunk.h"
 
 const Rotations ArmorStand::DEFAULT_HEAD_POSE      (0.0f, 0.0f, 0.0f);
 const Rotations ArmorStand::DEFAULT_BODY_POSE      (0.0f, 0.0f, 0.0f);
@@ -87,7 +88,7 @@ void ArmorStand::defineSynchedData()
 
 ArmorStand::~ArmorStand() {}
 
-
+bool ArmorStand::hasPhysics()    const { return (entityData->getByte(DATA_CLIENT_FLAGS) & FLAG_NO_GRAVITY) == 0;  }
 bool ArmorStand::isBaby()        const { return (entityData->getByte(DATA_CLIENT_FLAGS) & FLAG_SMALL)       != 0; }
 bool ArmorStand::isSmall()       const { return isBaby(); }
 bool ArmorStand::isShowArms()    const { return (entityData->getByte(DATA_CLIENT_FLAGS) & FLAG_SHOW_ARMS)   != 0; }
@@ -192,6 +193,93 @@ void ArmorStand::updateInvisibilityStatus()
     setInvisible(invisible);
 }
 
+void ArmorStand::travel(float xa, float ya)
+{
+    if (hasPhysics()) {
+        float friction = 0.91f;
+        int frictionTile = 0;
+        if (onGround)
+        {
+            frictionTile = level->getTile(Mth::floor(x), Mth::floor(bb->y0) - 1, Mth::floor(z));
+            friction = 0.6f * 0.91f;
+            if (frictionTile > 0)
+            {
+                friction = Tile::tiles[frictionTile]->friction * 0.91f;
+            }
+        }
+
+        float friction2 = (0.6f * 0.6f * 0.91f * 0.91f * 0.6f * 0.91f) / (friction * friction * friction);
+
+        float speed;
+        if (onGround)
+        {
+            speed = getSpeed() * friction2;
+        }
+        else
+        {
+            speed = flyingSpeed;
+        }
+
+        moveRelative(xa, ya, speed);
+
+        friction = 0.91f;
+        if (onGround)
+        {
+            friction = 0.6f * 0.91f;
+            if (frictionTile > 0)
+            {
+                friction = Tile::tiles[frictionTile]->friction * 0.91f;
+            }
+        }
+        if (onLadder())
+        {
+            float max = 0.15f;
+            if (xd < -max) xd = -max;
+            if (xd > max) xd = max;
+            if (zd < -max) zd = -max;
+            if (zd > max) zd = max;
+            fallDistance = 0;
+            if (yd < -0.15) yd = -0.15;
+            bool playerSneaking = isSneaking() && this->instanceof(eTYPE_PLAYER);
+            if (playerSneaking && yd < 0) yd = 0;
+        }
+
+        move(xd, yd, zd);
+
+        if (horizontalCollision && onLadder())
+        {
+            yd = 0.2;
+        }
+
+        if (!level->isClientSide || (level->hasChunkAt(static_cast<int>(x), 0, static_cast<int>(z)) && level->getChunkAt(static_cast<int>(x), static_cast<int>(z))->loaded))
+        {
+            yd -= 0.08;
+        }
+        else if (y > 0)
+        {
+            yd = -0.1;
+        }
+        else
+        {
+            yd = 0;
+        }
+
+        yd *= 0.98f;
+        xd *= friction;
+        zd *= friction;
+
+        walkAnimSpeedO = walkAnimSpeed;
+        double xxd = x - xo;
+        double zzd = z - zo;
+        float wst = Mth::sqrt(xxd * xxd + zzd * zzd) * 4;
+        if (wst > 1) wst = 1;
+        walkAnimSpeed += (wst - walkAnimSpeed) * 0.4f;
+        walkAnimPos += walkAnimSpeed;
+    } else {
+        move(xd, yd, zd);
+    }
+}
+
 
 void ArmorStand::tick()
 {
@@ -199,14 +287,14 @@ void ArmorStand::tick()
     LivingEntity::tick();
     if (onGround)
     {
-    BlockPos pos((int)floorf(x), (int)floorf(y) - 1, (int)floorf(z));
-    int blockId = level->getTile(pos.getX(), pos.getY(), pos.getZ());
-    if (blockId == Tile::topSnow->id)
-    {
-        int meta = level->getData(pos.getX(), pos.getY(), pos.getZ());
-        float snowHeight = ((meta & 0x7) + 1) * 0.125f;
-        moveTo(x, floorf(y) + snowHeight, z, yRot, xRot);
-    }
+        BlockPos pos((int)floorf(x), (int)floorf(y) - 1, (int)floorf(z));
+        int blockId = level->getTile(pos.getX(), pos.getY(), pos.getZ());
+        if (blockId == Tile::topSnow->id)
+        {
+            int meta = level->getData(pos.getX(), pos.getY(), pos.getZ());
+            float snowHeight = ((meta & 0x7) + 1) * 0.125f;
+            moveTo(x, floorf(y) + snowHeight, z, yRot, xRot);
+        }
     }
     this->yRot      = lockedRot;
     this->yRotO     = lockedRot;
