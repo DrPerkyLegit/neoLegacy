@@ -1046,6 +1046,13 @@ void PlayerConnection::handleCommand(const wstring& message)
 	ss >> cmd;
 if (cmd == L"tp" || cmd == L"teleport")
 {
+
+	if (!app.GetGameHostOption(eGameHostOption_CheatsEnabled))
+		{
+			warn(L"Cheats are not enabled on this server.");
+			return;
+		}
+
     if (!player->hasPermission(eGameCommand_Teleport))
     {
         warn(L"You do not have permission to use this command.");
@@ -1138,6 +1145,13 @@ if (cmd == L"tp" || cmd == L"teleport")
 	}
 } else if (cmd == L"time")
 {
+
+	if (!app.GetGameHostOption(eGameHostOption_CheatsEnabled))
+		{
+			warn(L"Cheats are not enabled on this server.");
+			return;
+		}
+
     if (!player->hasPermission(eGameCommand_Time))
     {
         warn(L"You do not have permission to use this command.");
@@ -1268,15 +1282,44 @@ if (cmd == L"tp" || cmd == L"teleport")
 }
 	else if (cmd == L"kill")
 	{
+		if (!app.GetGameHostOption(eGameHostOption_CheatsEnabled))
+		{
+			warn(L"Cheats are not enabled on this server.");
+			return;
+		}
+
 		if (!player->hasPermission(eGameCommand_Kill))
 		{
 			warn(L"You do not have permission to use this command.");
 			return;
 		}
-		server->getCommandDispatcher()->performCommand(player, eGameCommand_Kill, byteArray());
+
+		wstring targetName;
+		ss >> targetName;
+
+		if (targetName.empty())
+		{
+        
+			server->getCommandDispatcher()->performCommand(player, eGameCommand_Kill, byteArray());
+		}
+		else
+		{
+        
+			ByteArrayOutputStream baos;
+			DataOutputStream dos(&baos);
+			dos.writeUTF(targetName);
+			byteArray data = baos.toByteArray();
+			server->getCommandDispatcher()->performCommand(player, eGameCommand_Kill, data);
+		}
 	}
 	else if (cmd == L"toggledownfall")
 	{
+		if (!app.GetGameHostOption(eGameHostOption_CheatsEnabled))
+		{
+			warn(L"Cheats are not enabled on this server.");
+			return;
+		}
+
 		if (!player->hasPermission(eGameCommand_ToggleDownfall))
 		{
 			warn(L"You do not have permission to use this command.");
@@ -1285,6 +1328,14 @@ if (cmd == L"tp" || cmd == L"teleport")
 		shared_ptr<GameCommandPacket> packet = ToggleDownfallCommand::preparePacket();
 		server->getCommandDispatcher()->performCommand(player, eGameCommand_ToggleDownfall, packet->data);
 	} else if (cmd == L"gamemode") {
+
+
+		if (!app.GetGameHostOption(eGameHostOption_CheatsEnabled))
+		{
+			warn(L"Cheats are not enabled on this server.");
+			return;
+		}
+
 		if (!player->hasPermission(eGameCommand_GameMode))
 		{
 			warn(L"You do not have permission to use this command.");
@@ -1323,6 +1374,13 @@ if (cmd == L"tp" || cmd == L"teleport")
     	shared_ptr<GameCommandPacket> packet = GameModeCommand::preparePacket(target, mode);
     	server->getCommandDispatcher()->performCommand(player, eGameCommand_GameMode, packet->data);
 	} else if (cmd == L"give") {
+
+		if (!app.GetGameHostOption(eGameHostOption_CheatsEnabled))
+		{
+			warn(L"Cheats are not enabled on this server.");
+			return;
+		}
+
 		if (!player->hasPermission(eGameCommand_Give))
 		{
 			warn(L"You do not have permission to use this command.");
@@ -1868,6 +1926,8 @@ void PlayerConnection::handleGameCommand(shared_ptr<GameCommandPacket> packet)
 		player->getName().c_str(), player->isModerator() ? 1 : 0, isHost ? 1 : 0,
 		static_cast<int>(packet->command));
 #endif
+	
+
 	MinecraftServer::getInstance()->getCommandDispatcher()->performCommand(player, packet->command, packet->data);
 }
 
