@@ -23,6 +23,7 @@ Huge thanks to the following projects:
 - [Patoke/LCERenewed](https://github.com/Patoke/LCERenewed) - for some of the patches that required deep decompilation
 - [itsRevela/LCE-Revelations](https://git.revela.dev/itsRevela/LCE-Revelations) - for providing a stable project for neoLegacy to continue with
 - [GabsPuNs/Project-Zenith](https://github.com/GabsPuNs/Project-Zenith-Main) - for providing us with their implemention of the Classic Crafting Feature.
+- rdust_dusted (Discord) - for providing us with a redesigned logo that we currently use.
 
 # Build & Run
 
