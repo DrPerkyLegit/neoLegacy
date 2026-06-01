@@ -1,127 +1,110 @@
-﻿
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "PacketListener.h"
 #include "LevelParticlesPacket.h"
-#include "../Minecraft.Client/ParticleType.h"
 
 LevelParticlesPacket::LevelParticlesPacket()
 {
-    
-    this->overrideLimiter = false;  
-    this->type            = nullptr; 
-    this->count           = 0;      
-    this->y               = 0.0f;   
-    this->paramCount      = 0;      
-    this->x               = 0.0f;   
-    this->yDist           = 0.0f;   
-    this->zDist           = 0.0f;   
-    this->z               = 0.0f;   
-    this->maxSpeed        = 0.0f;   
-    this->xDist           = 0.0f;   
-    this->params          = nullptr; 
+	this->name = L"";
+	this->x = 0.0f;
+	this->y = 0.0f;
+	this->z = 0.0f;
+	this->xDist = 0.0f;
+	this->yDist = 0.0f;
+	this->zDist = 0.0f;
+	this->maxSpeed = 0.0f;
+	this->count = 0;
 }
 
-LevelParticlesPacket::LevelParticlesPacket(const ParticleType* type, bool overrideLimiter,
-                                            float x, float y, float z,
-                                            float xDist, float yDist, float zDist,
-                                            float maxSpeed, int count,
-                                            arrayWithLength<int> data)
+LevelParticlesPacket::LevelParticlesPacket(const wstring& name, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count)
 {
-    this->type            = type;           
-    this->overrideLimiter = overrideLimiter; 
-    this->x               = x;             
-    this->y               = y;             
-    this->z               = z;             
-    this->xDist           = xDist;         
-    this->yDist           = yDist;         
-    this->zDist           = zDist;         
-    this->maxSpeed        = maxSpeed;      
-    this->count           = count;         
-    this->paramCount      = data.length;   
-
-    if (data.data && data.length > 0)
-    {
-        this->params = new int[data.length];
-        memcpy(this->params, data.data, data.length * sizeof(int));
-    }
-    else
-    {
-        this->params = nullptr; 
-    }
-}
-
-LevelParticlesPacket::~LevelParticlesPacket()
-{
-   
-    if (params)
-    {
-        delete[] params;
-        params = nullptr;
-    }
+	this->name = name;
+	this->x = x;
+	this->y = y;
+	this->z = z;
+	this->xDist = xDist;
+	this->yDist = yDist;
+	this->zDist = zDist;
+	this->maxSpeed = maxSpeed;
+	this->count = count;
 }
 
 void LevelParticlesPacket::read(DataInputStream* dis)
 {
-    int particleId = dis->readInt();
-    const ParticleType* resolved = ParticleType::byId(particleId);
-    if (!resolved)
-        resolved = ParticleType::getDefault();
-    this->type = resolved;
-
-    this->overrideLimiter = dis->readBoolean();
-
-    this->x        = dis->readFloat();
-    this->y        = dis->readFloat();
-    this->z        = dis->readFloat();
-    this->xDist    = dis->readFloat();
-    this->yDist    = dis->readFloat();
-    this->zDist    = dis->readFloat();
-    this->maxSpeed = dis->readFloat();
-    this->count    = dis->readInt();
-
-    int paramCount = this->type ? this->type->getParamCount() : 0;
-    this->paramCount = paramCount;
-
-    if (paramCount > 0)
-    {
-        this->params = new int[paramCount]();
-        for (int i = 0; i < paramCount; i++)
-        {
-            this->params[i] = dis->readInt();
-        }
-    }
-    else
-    {
-        this->params = nullptr;
-    }
+	name = readUtf(dis, 64);
+	x = dis->readFloat();
+	y = dis->readFloat();
+	z = dis->readFloat();
+	xDist = dis->readFloat();
+	yDist = dis->readFloat();
+	zDist = dis->readFloat();
+	maxSpeed = dis->readFloat();
+	count = dis->readInt();
 }
 
 void LevelParticlesPacket::write(DataOutputStream* dos)
 {
-    dos->writeInt(this->type ? this->type->getId() : 0);
-    dos->writeBoolean(this->overrideLimiter);
-    dos->writeFloat(this->x);
-    dos->writeFloat(this->y);
-    dos->writeFloat(this->z);
-    dos->writeFloat(this->xDist);
-    dos->writeFloat(this->yDist);
-    dos->writeFloat(this->zDist);
-    dos->writeFloat(this->maxSpeed);
-    dos->writeInt(this->count);
+	writeUtf(name, dos);
+	dos->writeFloat(x);
+	dos->writeFloat(y);
+	dos->writeFloat(z);
+	dos->writeFloat(xDist);
+	dos->writeFloat(yDist);
+	dos->writeFloat(zDist);
+	dos->writeFloat(maxSpeed);
+	dos->writeInt(count);
+}
 
-    int toWrite = this->type ? this->type->getParamCount() : 0;
-    for (int i = 0; i < toWrite; i++)
-    {
-        dos->writeInt(this->params[i]);
-    }
+wstring LevelParticlesPacket::getName()
+{
+	return name;
+}
+
+double LevelParticlesPacket::getX()
+{
+	return x;
+}
+
+double LevelParticlesPacket::getY()
+{
+	return y;
+}
+
+double LevelParticlesPacket::getZ()
+{
+	return z;
+}
+
+float LevelParticlesPacket::getXDist()
+{
+	return xDist;
+}
+
+float LevelParticlesPacket::getYDist()
+{
+	return yDist;
+}
+
+float LevelParticlesPacket::getZDist()
+{
+	return zDist;
+}
+
+float LevelParticlesPacket::getMaxSpeed()
+{
+	return maxSpeed;
+}
+
+int LevelParticlesPacket::getCount()
+{
+	return count;
 }
 
 void LevelParticlesPacket::handle(PacketListener* listener)
 {
-    listener->handleParticleEvent(shared_from_this());
+	listener->handleParticleEvent(shared_from_this());
 }
 
 int LevelParticlesPacket::getEstimatedSize()
 {
-    return 0x40; 
+	return 4 * 2 + 7 * 8;
 }

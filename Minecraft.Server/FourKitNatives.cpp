@@ -1281,10 +1281,9 @@ void __cdecl NativeSpawnParticle(int entityId, int particleId, float x, float y,
 {
     auto player = FindPlayer(entityId);
     if (!player || !player->connection) return;
-    const ParticleType* type = ParticleType::byId(particleId);
-    if (!type) type = ParticleType::getDefault();
-    arrayWithLength<int> noParams = { nullptr, 0 };
-    player->connection->send(std::make_shared<LevelParticlesPacket>(type, false, x, y, z, offsetX, offsetY, offsetZ, speed, count, noParams));
+    wchar_t buf[32];
+    swprintf_s(buf, L"%d", particleId);
+    player->connection->send(std::make_shared<LevelParticlesPacket>(std::wstring(buf), x, y, z, offsetX, offsetY, offsetZ, speed, count));
 }
 
 int __cdecl NativeSetPassenger(int entityId, int passengerEntityId)
