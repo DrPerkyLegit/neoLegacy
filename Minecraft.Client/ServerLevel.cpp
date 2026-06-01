@@ -1683,14 +1683,15 @@ void ServerLevel::flagEntitiesToBeRemoved(unsigned int *flags, bool *removedFoun
 }
 void ServerLevel::sendParticles(const ParticleType* type, bool longDistance, double x, double y, double z, int count, double dx, double dy, double dz, double speed, arrayWithLength<int> data)
 {
+	wchar_t buf[32];
+	swprintf_s(buf, L"%d", type->getId());
+
     auto packet = make_shared<LevelParticlesPacket>(
-        type,
-        longDistance,
+		buf,
         (float)x, (float)y, (float)z,
         (float)dx, (float)dy, (float)dz,
         (float)speed,
-        count,
-        data
+        count
     );
 
     for (auto const& p : players)
