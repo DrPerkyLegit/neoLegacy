@@ -555,7 +555,7 @@ void LivingEntityRenderer::renderName(shared_ptr<LivingEntity> mob, double x, do
 
 bool LivingEntityRenderer::shouldShowName(shared_ptr<LivingEntity> mob)
 {
-	return Minecraft::renderNames() && mob != entityRenderDispatcher->cameraEntity && !mob->isInvisibleTo(Minecraft::GetInstance()->player) && mob->rider.lock() == nullptr;
+	return Minecraft::renderNames() && mob != entityRenderDispatcher->cameraEntity && (!mob->isInvisibleTo(Minecraft::GetInstance()->player) || mob->isCustomNameVisible()) && mob->rider.lock() == nullptr;
 }
 
 void LivingEntityRenderer::renderNameTags(shared_ptr<LivingEntity> mob, double x, double y, double z, const wstring &msg, float scale, double dist)
