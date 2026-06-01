@@ -68,6 +68,7 @@ public:
     explicit ArmorStand(Level* level);
     virtual ~ArmorStand();
 
+    bool hasPhysics()    const;
     bool isBaby()        const;
     bool isSmall()       const;
     bool isShowArms()    const;
@@ -145,6 +146,8 @@ public:
 
     void updateBoundingBox(bool markerMode);
     void updateInvisibilityStatus();
+
+    virtual void travel(float xz, float ya);
 
     virtual shared_ptr<ItemInstance> getCarriedItem()                                    override;
     virtual shared_ptr<ItemInstance> getCarried(int slot)                                override;
