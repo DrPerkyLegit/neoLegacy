@@ -155,7 +155,7 @@ void Connection::send(unsigned char* buffer, int size)
 	// 4J Jev, synchronized (&writeLock)
 	EnterCriticalSection(&writeLock);
 
-	estimatedRemainingRaw += size;
+	estimatedRemaining += size;
 
 	outgoingRaw.push(std::make_pair(buffer, size));
 
@@ -254,10 +254,10 @@ bool Connection::writeTick()
 
 		rawPacket = outgoingRaw.front();
 		outgoingRaw.pop();
-		estimatedRemainingRaw -= rawPacket.second;
+		estimatedRemaining -= rawPacket.second;
 
 		for (int i = 0; i < rawPacket.second; i++) {
-			byteArrayDos->writeByte(rawPacket.first[i]);
+			bufferedDos->writeByte(rawPacket.first[i]);
 		}
 
 		// 4J Stu - Changed this so that rather than writing to the network stream through a buffered stream we want to:
