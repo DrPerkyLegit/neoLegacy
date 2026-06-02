@@ -526,7 +526,10 @@ void PlayerConnection::handlePlayerAction(shared_ptr<PlayerActionPacket> packet)
 				if (cancelled)
 					return;
 				player->inventory->removeItem(player->inventory->selected, 1);
-				player->drop(selected->copy());
+				auto droppingItem = selected->copy();
+				droppingItem->count = 1;
+
+				player->drop(droppingItem);
 				return;
 			}
 		}
