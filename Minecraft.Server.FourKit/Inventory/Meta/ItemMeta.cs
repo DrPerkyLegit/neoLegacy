@@ -1,6 +1,7 @@
 namespace Minecraft.Server.FourKit.Inventory.Meta;
 
 using Minecraft.Server.FourKit.Enchantments;
+using Minecraft.Server.FourKit.Inventory.NBT;
 
 /// <summary>
 /// Represents the metadata of an <see cref="ItemStack"/>, including display name and lore.
@@ -10,6 +11,7 @@ public class ItemMeta
     private string? _displayName;
     private Dictionary<EnchantmentType, int>? _enchants;
     private List<string>? _lore;
+    private CompoundTag? _tag;
 
     /// <summary>
     /// Checks for existence of a display name.
@@ -51,6 +53,14 @@ public class ItemMeta
     {
         _lore = lore != null ? new List<string>(lore) : null;
     }
+
+    public CompoundTag getTag() => _tag == null ? new CompoundTag("fourkit-data") : _tag.clone();
+
+    public void setTag(CompoundTag tag)
+    {
+        _tag = tag.clone();
+    }
+
 
     /// <summary>
     /// Adds the specified enchantment to this item meta.
@@ -170,12 +180,13 @@ public class ItemMeta
         copy._displayName = _displayName;
         copy._enchants = _enchants != null ? new Dictionary<EnchantmentType, int>(_enchants) : null;
         copy._lore = _lore != null ? new List<string>(_lore) : null;
+        copy._tag = _tag != null ? _tag.clone() : null;
         return copy;
     }
 
     internal bool isEmpty()
     {
-        return _displayName == null && (_lore == null || _lore.Count == 0) && (_enchants == null || _enchants.Count == 0);
+        return _displayName == null && (_lore == null || _lore.Count == 0) && (_enchants == null || _enchants.Count == 0) && (_tag == null || _tag.size() == 0);
     }
 
     internal static ItemMeta? ReadFromBuffer(byte[] buffer, ref int offset)
@@ -241,6 +252,24 @@ public class ItemMeta
                 meta.setEnchants(enchants);
             }
 
+            if ((metadataFlags & 0x8) != 0)
+            {
+                CompoundTag compoundTag = new CompoundTag("fourkit-data");
+                short tagLength = (short)((buffer[offset] << 8) | buffer[offset + 1]);
+                offset += 2;
+
+                for (int i = 0; i < tagLength; i++)
+                {
+                    Tag? tag = Tag.ReadFromBuffer(buffer, ref offset);
+                    if (tag != null)
+                    {
+                        compoundTag.putTag(tag);
+                    }
+                }
+
+                meta.setTag(compoundTag);
+            }
+
             return meta;
         }
 
@@ -262,8 +291,9 @@ public class ItemMeta
             bool hasDisplayName = meta._displayName != null && meta._displayName.Length > 0;
             bool hasLore = meta._lore != null && meta._lore.Count > 0;
             bool hasEnchants = meta._enchants != null && meta._enchants.Count > 0;
+            bool hasTag = meta._tag != null && meta._tag.size() > 0;
 
-            if (hasDisplayName || hasLore || hasEnchants)
+            if (hasDisplayName || hasLore || hasEnchants || hasTag)
             {
                 int metadataFlagsOffset = offset;
                 buffer[metadataFlagsOffset] = 0;
@@ -339,6 +369,24 @@ public class ItemMeta
                         offset += 1;
                         buffer[offset] = (byte)(enchantmentLevel & 0xFF);
                         offset += 1;
+                    }
+                }
+
+                if (hasTag)
+                {
+                    buffer[metadataFlagsOffset] |= 0x8;
+                    
+                    List<Tag> allTags = meta._tag!.getAllTags();
+                    short tagLength = (short)(allTags.Count);
+
+                    buffer[offset] = (byte)((tagLength >> 0x8) & 0xFF);
+                    offset += 1;
+                    buffer[offset] = (byte)(tagLength & 0xFF);
+                    offset += 1;
+
+                    for (int i = 0; i < tagLength; i++)
+                    {
+                        Tag.WriteToBuffer(allTags[i], buffer, ref offset);
                     }
                 }
             }

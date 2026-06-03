@@ -762,6 +762,213 @@ int __cdecl NativeSendRaw(int entityId, unsigned char *bufferData, int bufferSiz
     player->connection->connection->send(bufferData, bufferSize);
 }
 
+void Transformation_WriteTagToBuffer(Tag* tag, unsigned char* outBuffer, int& offset) {
+    bool isNull = (tag == nullptr);
+
+    outBuffer[offset] = isNull; offset += 1;
+
+    if (isNull) return;
+
+    {
+        wstring tagString = tag->getName();
+        unsigned char tagLength = (tagString.length() & 0xFF);
+
+        outBuffer[offset] = tagLength; offset += 1;
+
+        for (wchar_t _char : tagString) {
+            unsigned short _castedChar = ((unsigned char)_char);
+
+            outBuffer[offset] = ((_castedChar >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (_castedChar & 0xFF); offset += 1;
+        }
+    }
+
+    {
+        unsigned char tagType = tag->getId();
+        outBuffer[offset] = tagType; offset += 1;
+
+        if (tagType == Tag::TAG_Byte) {
+            unsigned char value = ((ByteTag*)tag)->data;
+
+            outBuffer[offset] = value; offset += 1;
+        } else if (tagType == Tag::TAG_Short) {
+            short value = ((ShortTag*)tag)->data;
+
+            outBuffer[offset] = ((value >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (value & 0xFF); offset += 1;
+        } else if (tagType == Tag::TAG_Int) {
+            int value = ((IntTag*)tag)->data;
+
+            outBuffer[offset] = ((value >> 24) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 16) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (value & 0xFF); offset += 1;
+        } else if (tagType == Tag::TAG_Long) {
+            long value = ((LongTag*)tag)->data;
+
+            outBuffer[offset] = ((value >> 56) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 48) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 40) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 32) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 24) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 16) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (value & 0xFF); offset += 1;
+        } else if (tagType == Tag::TAG_Float) {
+            long value = (((FloatTag*)tag)->data * 32);
+
+            outBuffer[offset] = ((value >> 56) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 48) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 40) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 32) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 24) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 16) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (value & 0xFF); offset += 1;
+        } else if (tagType == Tag::TAG_Double) {
+            long value = (((DoubleTag*)tag)->data * 32);
+
+            outBuffer[offset] = ((value >> 56) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 48) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 40) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 32) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 24) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 16) & 0xFF); offset += 1;
+            outBuffer[offset] = ((value >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (value & 0xFF); offset += 1;
+        } else if (tagType == Tag::TAG_String) {
+            wstring value = ((StringTag*)tag)->data;
+            short length = ((short)value.length());
+
+            outBuffer[offset] = ((length >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (length & 0xFF); offset += 1;
+
+            for (int i = 0; i < length; i++) {
+                unsigned short _castedChar = ((unsigned char)value[i]);
+
+                outBuffer[offset] = ((_castedChar >> 8) & 0xFF); offset += 1;
+                outBuffer[offset] = (_castedChar & 0xFF); offset += 1;
+            }
+        } else if (tagType == Tag::TAG_List) {
+            ListTag<Tag>* listTag = ((ListTag<Tag>*)tag);
+            short length = ((short)listTag->size());
+
+            outBuffer[offset] = ((length >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (length & 0xFF); offset += 1;
+
+            for (int i = 0; i < length; i++) {
+                Transformation_WriteTagToBuffer(listTag->get(i), outBuffer, offset);
+            }
+        } else if (tagType == Tag::TAG_Compound) {
+            CompoundTag* compoundTag = ((CompoundTag*)tag);
+            std::vector<Tag*>* allTags = compoundTag->getAllTags();
+
+            short length = ((short)allTags->size());
+            outBuffer[offset] = ((length >> 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (length & 0xFF); offset += 1;
+
+            for (int i = 0; i < length; i++) {
+                Transformation_WriteTagToBuffer((*allTags)[i], outBuffer, offset);
+            }
+
+            delete allTags;
+        }
+    }
+}
+
+Tag* Transformation_ReadTagFromBuffer(unsigned char* outBuffer, int& offset) {
+    bool isNull = outBuffer[offset]; offset += 1;
+    if (isNull) return nullptr;
+
+    wstring tagName = L"";
+    {
+        unsigned char length = outBuffer[offset]; offset += 1;
+
+        for (int i = 0; i < length; i++) {
+            unsigned short value = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
+
+            tagName += (wchar_t)value;
+        }
+    }
+
+    {
+        unsigned char tagType = outBuffer[offset]; offset += 1;
+
+        if (tagType == Tag::TAG_Byte) {
+            unsigned char value = outBuffer[offset]; offset += 1;
+
+            return new ByteTag(tagName, value);
+        } else if (tagType == Tag::TAG_Short) {
+            unsigned short value = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
+
+            return new ShortTag(tagName, value);
+        } else if (tagType == Tag::TAG_Int) {
+            int value = 0;
+            value |= outBuffer[offset]; offset += 1;
+            value |= outBuffer[offset] << 8; offset += 1;
+            value |= outBuffer[offset] << 16; offset += 1;
+            value |= outBuffer[offset] << 24; offset += 1;
+
+            return new IntTag(tagName, value);
+        } else if (tagType == Tag::TAG_Long || tagType == Tag::TAG_Float || tagType == Tag::TAG_Double) {
+            long value = 0;
+            value |= outBuffer[offset]; offset += 1;
+            value |= outBuffer[offset] << 8; offset += 1;
+            value |= outBuffer[offset] << 16; offset += 1;
+            value |= outBuffer[offset] << 24; offset += 1;
+            value |= outBuffer[offset] << 32; offset += 1;
+            value |= outBuffer[offset] << 40; offset += 1;
+            value |= outBuffer[offset] << 48; offset += 1;
+            value |= outBuffer[offset] << 56; offset += 1;
+
+            if (tagType == Tag::TAG_Long) {
+                return new LongTag(tagName, value);
+            } else if (tagType == Tag::TAG_Float) {
+                return new FloatTag(tagName, (value / 32));
+            } else if (tagType == Tag::TAG_Double) {
+                return new DoubleTag(tagName, (value / 32));
+            }
+
+        } else if (tagType == Tag::TAG_String) {
+            wstring value = L"";
+
+            short length = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
+
+            for (int i = 0; i < length; i++) {
+                unsigned short value = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
+
+                tagName += (wchar_t)value;
+            }
+        } else if (tagType == Tag::TAG_List) {
+            ListTag<Tag>* listTag = new ListTag<Tag>(tagName);
+            short length = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
+
+            for (int i = 0; i < length; i++) {
+                Tag* newTag = Transformation_ReadTagFromBuffer(outBuffer, offset);
+                if (newTag != nullptr) {
+                    listTag->add(newTag);
+                }
+            }
+
+            return listTag;
+        } else if (tagType == Tag::TAG_Compound) {
+            CompoundTag* compoundTag = new CompoundTag();
+            short length = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
+
+            for (int i = 0; i < length; i++) {
+                Tag* newTag = Transformation_ReadTagFromBuffer(outBuffer, offset);
+                if (newTag != nullptr) {
+                    compoundTag->put(tagName, newTag);
+                }
+            }
+
+            return compoundTag;
+        }
+    }
+
+    return nullptr;
+}
+
 void Transformation_WriteItemMetaToBuffer(std::shared_ptr<ItemInstance> item, unsigned char* outBuffer, int& offset) {
     bool hasItemTag =  ((item != nullptr) && (item->tag != nullptr));
     outBuffer[offset] = !hasItemTag; offset += 1;
@@ -828,7 +1035,22 @@ void Transformation_WriteItemMetaToBuffer(std::shared_ptr<ItemInstance> item, un
             }
 
         }
-        
+
+        CompoundTag* dataTag = item->getTag()->getCompound(L"fourkit-data");
+
+        if (dataTag != nullptr) {
+            outBuffer[metadataFlagsOffset] |= 0x8;
+
+            vector<Tag*>* allTags = dataTag->getAllTags();
+            short tagLength = (short)(allTags->size());
+
+            outBuffer[offset] = ((tagLength << 8) & 0xFF); offset += 1;
+            outBuffer[offset] = (tagLength & 0xFF); offset += 1;
+
+            for (int i = 0; i < tagLength; i++) {
+                Transformation_WriteTagToBuffer((*allTags)[i], outBuffer, offset);
+            }
+        }
     }
 }
 
@@ -883,6 +1105,20 @@ void Transformation_ReadItemMetaFromBuffer(ItemInstance* item, unsigned char* it
             }
 
             item->tag->put(L"ench", enchantmentTags);
+        }
+
+        if (metadataFlags & 0x8) {
+            CompoundTag* compoundTag = new CompoundTag(L"fourkit-data");
+            int16_t length = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
+
+            for (int i = 0; i < length; i++) {
+                Tag* tag = Transformation_ReadTagFromBuffer(itemData, offset);
+                if (tag != nullptr) {
+                    compoundTag->put(tag->getName(), tag);
+                }
+            }
+
+            item->tag->put(L"fourkit-data", compoundTag);
         }
 
     }
