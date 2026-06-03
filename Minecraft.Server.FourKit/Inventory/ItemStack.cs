@@ -158,9 +158,11 @@ public class ItemStack
 
         if (isItemNull == 0)
         {
-            short itemId = BitConverter.ToInt16(buffer, offset); offset += 2;
+            short itemId = (short)((buffer[offset] << 8) | buffer[offset + 1]);
+            offset += 2;
             byte itemAmount = buffer[offset]; offset += 1;
-            short itemAux = BitConverter.ToInt16(buffer, offset); offset += 2;
+            short itemAux = (short)((buffer[offset] << 8) | buffer[offset + 1]);
+            offset += 2;
 
             ItemStack item = new ItemStack((int)itemId, (int)itemAmount, itemAux);
             item.setItemMetaInternal(ItemMeta.ReadFromBuffer(buffer, ref offset));

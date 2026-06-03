@@ -68,14 +68,16 @@ public class ItemMeta
         {
             Enchantment enchant = Enchantment.getByType(enchantment);
 
-            if (enchant.getMaxLevel() < level) return false;
+            if (enchant.getMaxLevel() < level)
+                return false;
         }
 
         try
         {
             _enchants.Add(enchantment, level);
             return true;
-        } catch { }
+        }
+        catch { }
 
         return false;
     }
@@ -87,7 +89,8 @@ public class ItemMeta
     /// <returns>true if the item meta changed as a result of this call, false otherwise</returns>
     public bool removeEnchant(EnchantmentType enchantment)
     {
-        if (!hasEnchant(enchantment)) return false;
+        if (!hasEnchant(enchantment))
+            return false;
 
         return _enchants.Remove(enchantment);
     }
@@ -97,7 +100,7 @@ public class ItemMeta
     /// </summary>
     /// <returns>An immutable copy of the enchantments</returns>
     public Dictionary<EnchantmentType, int> getEnchants() => _enchants != null ? new Dictionary<EnchantmentType, int>(_enchants) { } : new Dictionary<EnchantmentType, int>();
-    
+
     /// <summary>
     /// Checks for the level of the specified enchantment.
     /// </summary>
@@ -105,7 +108,8 @@ public class ItemMeta
     /// <returns>The level that the specified enchantment has, or 0 if none</returns>
     public int getEnchantLevel(EnchantmentType enchantment)
     {
-        if (!hasEnchant(enchantment)) return 0;
+        if (!hasEnchant(enchantment))
+            return 0;
 
         return _enchants[enchantment]; //this cant be invalid, we check above
     }
@@ -118,13 +122,15 @@ public class ItemMeta
     public bool hasConflictingEnchant(EnchantmentType enchantment)
     {
         Enchantment enchantmentClass = Enchantment.getByType(enchantment);
-        if (enchantmentClass == null) return false; //this should never happen
+        if (enchantmentClass == null)
+            return false; //this should never happen
 
         foreach (KeyValuePair<EnchantmentType, int> ench in _enchants)
         {
             Enchantment enchClass = Enchantment.getByType(ench.Key);
 
-            if (enchClass == null) continue; //this should never happen
+            if (enchClass == null)
+                continue; //this should never happen
 
             if (enchClass.conflictsWith(enchantmentClass))
             {
@@ -174,7 +180,8 @@ public class ItemMeta
 
     internal static ItemMeta? ReadFromBuffer(byte[] buffer, ref int offset)
     {
-        byte isMetadataEmpty = buffer[offset]; offset++;
+        byte isMetadataEmpty = buffer[offset];
+        offset++;
 
         if (isMetadataEmpty == 0)
         {
@@ -184,13 +191,13 @@ public class ItemMeta
             offset++;
             if ((metadataFlags & 0x1) != 0)
             {
-                short displayNameLength = BitConverter.ToInt16(buffer, offset);
+                short displayNameLength = (short)((buffer[offset] << 8) | buffer[offset + 1]);
                 offset += 2;
 
                 string displayName = "";
                 for (int i = 0; i < displayNameLength; i++)
                 {
-                    ushort charCode = BitConverter.ToUInt16(buffer, offset);
+                    ushort charCode = (ushort)((buffer[offset] << 8) | buffer[offset + 1]);
                     offset += 2;
 
                     displayName += char.ConvertFromUtf32(charCode);
@@ -205,10 +212,11 @@ public class ItemMeta
                 for (int i = 0; i < loreCount; i++)
                 {
                     string loreString = "";
-                    short loreLineLength = BitConverter.ToInt16(buffer, offset); offset += 2;
+                    short loreLineLength = (short)((buffer[offset] << 8) | buffer[offset + 1]);
+                    offset += 2;
                     for (int j = 0; j < loreLineLength; j++)
                     {
-                        ushort charCode = BitConverter.ToUInt16(buffer, offset);
+                        ushort charCode = (ushort)((buffer[offset] << 8) | buffer[offset + 1]);
                         offset += 2;
 
                         loreString += char.ConvertFromUtf32(charCode);
@@ -224,9 +232,9 @@ public class ItemMeta
                 Dictionary<EnchantmentType, int> enchants = new Dictionary<EnchantmentType, int>();
                 for (int i = 0; i < enchantmentCount; i++)
                 {
-                    EnchantmentType enchantmentType = (EnchantmentType)BitConverter.ToInt16(buffer, offset);
+                    EnchantmentType enchantmentType = (EnchantmentType)(short)((buffer[offset] << 8) | buffer[offset + 1]);
                     offset += 2;
-                    short enchantmentLevel = BitConverter.ToInt16(buffer, offset);
+                    short enchantmentLevel = (short)((buffer[offset] << 8) | buffer[offset + 1]);
                     offset += 2;
                     enchants.Add(enchantmentType, enchantmentLevel);
                 }
@@ -243,11 +251,13 @@ public class ItemMeta
     {
         if (meta == null || meta.isEmpty())
         {
-            buffer[offset] = 1; offset += 1;
+            buffer[offset] = 1;
+            offset += 1;
         }
         else
         {
-            buffer[offset] = 0; offset += 1;
+            buffer[offset] = 0;
+            offset += 1;
 
             bool hasDisplayName = meta._displayName != null && meta._displayName.Length > 0;
             bool hasLore = meta._lore != null && meta._lore.Count > 0;
