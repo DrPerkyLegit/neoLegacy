@@ -130,6 +130,13 @@ public class ItemStack
         return true;
     }
 
+    public void editItemMeta(Action<ItemMeta> action)
+    {
+        ItemMeta itemMeta = this.getItemMeta();
+        action.Invoke(itemMeta);
+        this.setItemMeta(itemMeta);
+    }
+
     internal ItemMeta? getItemMetaInternal() => _meta;
 
     internal void setItemMetaInternal(ItemMeta? meta) => _meta = meta;

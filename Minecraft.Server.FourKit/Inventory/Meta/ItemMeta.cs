@@ -61,6 +61,12 @@ public class ItemMeta
         _tag = tag.clone();
     }
 
+    public void editTag(Action<CompoundTag> action) {
+        CompoundTag tag = this.getTag();
+        action.Invoke(tag);
+        this.setTag(tag);
+    }
+
 
     /// <summary>
     /// Adds the specified enchantment to this item meta.
