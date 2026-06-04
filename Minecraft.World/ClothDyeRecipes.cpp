@@ -73,8 +73,8 @@ void ClothDyeRecipes::addRecipes(Recipes *r)
 	    L"zg", new ItemInstance(Item::items[Tile::rose_Id], 1, Rose::OXEYE_DAISY), L'D');
 	
 	// Tall flowers
-	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 2, DyePowderItem::YELLOW),
-	    L"zg", new ItemInstance(Item::items[Tile::tallgrass2_Id], 1, TallGrass2::SUNFLOWER), L'D');
+	//r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 2, DyePowderItem::YELLOW),
+	//    L"zg", new ItemInstance(Item::items[Tile::tallgrass2_Id], 1, TallGrass2::SUNFLOWER), L'D');
 	
 	r->addShapelessRecipy(new ItemInstance(Item::dye_powder, 2, DyePowderItem::MAGENTA),
 	    L"zg", new ItemInstance(Item::items[Tile::tallgrass2_Id], 1, TallGrass2::LILAC), L'D');

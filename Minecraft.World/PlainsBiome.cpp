@@ -75,7 +75,7 @@ void PlainsBiome::decorate(Level* level, Random* rand, int xo, int zo)
 
     if (_plains)
         {
-            DOUBLE_PLANT_GENERATOR->setPlantType(TallGrass2::SUNFLOWER);
+            /*DOUBLE_PLANT_GENERATOR->setPlantType(TallGrass2::SUNFLOWER);
 
             for (int i1 = 0; i1 < 10; ++i1)
             {
@@ -83,7 +83,7 @@ void PlainsBiome::decorate(Level* level, Random* rand, int xo, int zo)
                 int k1 = rand->nextInt(16) + 8;
                 int l1 = rand->nextInt(level->getHeightmap(j1, k1) + 32);
                 DOUBLE_PLANT_GENERATOR->place(level, rand, j1, l1, k1);
-            }
+            }*/
         }
     Biome::decorate(level, rand, xo, zo); 
 }
