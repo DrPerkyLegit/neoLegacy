@@ -365,6 +365,8 @@ void PlayerConnection::handleMovePlayer(shared_ptr<MovePlayerPacket> packet)
 
 		double dist = xDist * xDist + yDist * yDist + zDist * zDist;
 
+		//todo: fix this to support elytra, also fix this so it doesnt effect falling players
+		/*
 		// Anti-cheat: reject movement packets that exceed server-authoritative bounds.
 		double velocitySq = player->xd * player->xd + player->yd * player->yd + player->zd * player->zd;
 		double maxAllowedSq = kMoveBaseAllowanceSq + (velocitySq * kMoveVelocityAllowanceScale);
@@ -378,6 +380,7 @@ void PlayerConnection::handleMovePlayer(shared_ptr<MovePlayerPacket> packet)
 			disconnect(DisconnectPacket::eDisconnect_MovedTooQuickly);
 			return;
 		}
+		*/
 
 #if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
 		if (xLastOk != xt || yLastOk != yt || zLastOk != zt || yRotT != yRotOld || xRotT != xRotOld)
