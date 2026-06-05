@@ -6910,53 +6910,53 @@ wstring CMinecraftApp::FormatChatMessage(const wstring& desc, bool applyStyling)
 	wchar_t replacements[64];
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_0), 0xFFFFFFFF);
-	results = replaceAll(results, L"§0", replacements);
+	results = replaceAll(results, L"\u00A70", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_1), 0xFFFFFFFF);
-	results = replaceAll(results, L"§1", replacements);
+	results = replaceAll(results, L"\u00A71", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_2), 0xFFFFFFFF);
-	results = replaceAll(results, L"§2", replacements);
+	results = replaceAll(results, L"\u00A72", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_3), 0xFFFFFFFF);
-	results = replaceAll(results, L"§3", replacements);
+	results = replaceAll(results, L"\u00A73", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_4), 0xFFFFFFFF);
-	results = replaceAll(results, L"§4", replacements);
+	results = replaceAll(results, L"\u00A74", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_5), 0xFFFFFFFF);
-	results = replaceAll(results, L"§5", replacements);
+	results = replaceAll(results, L"\u00A75", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_6), 0xFFFFFFFF);
-	results = replaceAll(results, L"§6", replacements);
+	results = replaceAll(results, L"\u00A76", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_7), 0xFFFFFFFF);
-	results = replaceAll(results, L"§7", replacements);
+	results = replaceAll(results, L"\u00A77", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_8), 0xFFFFFFFF);
-	results = replaceAll(results, L"§8", replacements);
+	results = replaceAll(results, L"\u00A78", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_9), 0xFFFFFFFF);
-	results = replaceAll(results, L"§9", replacements);
+	results = replaceAll(results, L"\u00A79", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_a), 0xFFFFFFFF);
-	results = replaceAll(results, L"§a", replacements);
+	results = replaceAll(results, L"\u00A7a", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_b), 0xFFFFFFFF);
-	results = replaceAll(results, L"§b", replacements);
+	results = replaceAll(results, L"\u00A7b", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_c), 0xFFFFFFFF);
-	results = replaceAll(results, L"§c", replacements);
+	results = replaceAll(results, L"\u00A7c", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_d), 0xFFFFFFFF);
-	results = replaceAll(results, L"§d", replacements);
+	results = replaceAll(results, L"\u00A7d", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_e), 0xFFFFFFFF);
-	results = replaceAll(results, L"§e", replacements);
+	results = replaceAll(results, L"\u00A7e", replacements);
 
 	swprintf(replacements, 64, (applyStyling ? colorFormatString.data() : L""), GetHTMLColour(eHTMLColor_f), 0xFFFFFFFF);
-	results = replaceAll(results, L"§f", replacements);
-	results = replaceAll(results, L"§r", replacements); //we only support color so reset is the same as white color
+	results = replaceAll(results, L"\u00A7f", replacements);
+	results = replaceAll(results, L"\u00A7r", replacements); //we only support color so reset is the same as white color
 
 	results = replaceAll(results, L"'", L"\u2019");
 

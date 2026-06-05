@@ -1500,12 +1500,12 @@ int PlayerConnection::countDelayedPackets()
 
 void PlayerConnection::info(const wstring& string)
 {
-	send( shared_ptr<ChatPacket>( new ChatPacket(L"§7" + string) ) );
+	send( shared_ptr<ChatPacket>( new ChatPacket(L"\u00A77" + string) ) );
 }
 
 void PlayerConnection::warn(const wstring& string)
 {
-	send( shared_ptr<ChatPacket>( new ChatPacket(L"§c" + string) ) );
+	send( shared_ptr<ChatPacket>( new ChatPacket(L"\u00A7c" + string) ) );
 }
 
 wstring PlayerConnection::getConsoleName()
