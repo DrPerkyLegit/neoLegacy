@@ -69,6 +69,10 @@ public class ItemMeta
         _tag = tag != null ? tag.clone() : null;
     }
 
+    /// <summary>
+    /// Edits the NBT tag without needing to get and set
+    /// </summary>
+    /// <param name="action">Tag edit code</param>
     public void editTag(Action<CompoundTag> action) {
         CompoundTag tag = this.getTag();
         action.Invoke(tag);

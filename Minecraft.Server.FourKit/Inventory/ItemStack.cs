@@ -130,6 +130,10 @@ public class ItemStack
         return true;
     }
 
+    /// <summary>
+    /// Edits the ItemMeta without needing to get and set
+    /// </summary>
+    /// <param name="action">ItemMeta edit code</param>
     public void editItemMeta(Action<ItemMeta> action)
     {
         ItemMeta itemMeta = this.getItemMeta();
