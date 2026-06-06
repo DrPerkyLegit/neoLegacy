@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Minecraft.Server.FourKit.Inventory.NBT;
 
+/// <summary>
+/// An NBT tag that stores a byte, see <see cref="ItemMeta"/> on how to use it
+/// </summary>
 public class ByteTag : Tag
 {
     public byte data;
@@ -13,6 +16,7 @@ public class ByteTag : Tag
         this.data = value;
     }
 
+    /// <inheritdoc/>
     public override bool matches(Tag other)
     {
         if (other is ByteTag otherTag)
@@ -26,6 +30,7 @@ public class ByteTag : Tag
         return false;
     }
 
+    /// <inheritdoc/>
     public override ByteTag clone()
     {
         return new ByteTag(this.name, this.data);

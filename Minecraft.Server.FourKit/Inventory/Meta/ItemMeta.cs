@@ -54,11 +54,19 @@ public class ItemMeta
         _lore = lore != null ? new List<string>(lore) : null;
     }
 
+    /// <summary>
+    /// Gets the custom fourkit-data NBT tag that is set
+    /// </summary>
+    /// <returns>A CompoundTag instance</returns>
     public CompoundTag getTag() => _tag == null ? new CompoundTag("fourkit-data") : _tag.clone();
 
+    /// <summary>
+    /// Sets the custom fourkit-data NBT tag for this item. Removes all NBT when given null.
+    /// </summary>
+    /// <param name="tag">The tag that will be set.</param>
     public void setTag(CompoundTag tag)
     {
-        _tag = tag.clone();
+        _tag = tag != null ? tag.clone() : null;
     }
 
     public void editTag(Action<CompoundTag> action) {

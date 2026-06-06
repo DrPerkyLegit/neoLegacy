@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Minecraft.Server.FourKit.Inventory.NBT;
 
+/// <summary>
+/// An NBT tag that stores a int, see <see cref="ItemMeta"/> on how to use it
+/// </summary>
 public class IntTag : Tag
 {
     public int data;
@@ -13,6 +16,7 @@ public class IntTag : Tag
         this.data = value;
     }
 
+    /// <inheritdoc/>
     public override bool matches(Tag other)
     {
         if (other is IntTag otherTag)
@@ -26,6 +30,7 @@ public class IntTag : Tag
         return false;
     }
 
+    /// <inheritdoc/>
     public override IntTag clone()
     {
         return new IntTag(this.name, this.data);

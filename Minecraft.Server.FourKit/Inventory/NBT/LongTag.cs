@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Minecraft.Server.FourKit.Inventory.NBT;
 
+/// <summary>
+/// An NBT tag that stores a long, see <see cref="ItemMeta"/> on how to use it
+/// </summary>
 public class LongTag : Tag
 {
     public long data;
@@ -13,6 +16,7 @@ public class LongTag : Tag
         this.data = value;
     }
 
+    /// <inheritdoc/>
     public override bool matches(Tag other)
     {
         if (other is LongTag otherTag)
@@ -26,6 +30,7 @@ public class LongTag : Tag
         return false;
     }
 
+    /// <inheritdoc/>
     public override LongTag clone()
     {
         return new LongTag(this.name, this.data);

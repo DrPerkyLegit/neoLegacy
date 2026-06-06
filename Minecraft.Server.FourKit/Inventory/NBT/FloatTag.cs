@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Minecraft.Server.FourKit.Inventory.NBT;
 
+/// <summary>
+/// An NBT tag that stores a float with a 4 byte precision, see <see cref="ItemMeta"/> on how to use it
+/// </summary>
 public class FloatTag : Tag
 {
     public float data;
@@ -13,6 +16,7 @@ public class FloatTag : Tag
         this.data = value;
     }
 
+    /// <inheritdoc/>
     public override bool matches(Tag other)
     {
         if (other is FloatTag otherTag)
@@ -26,6 +30,7 @@ public class FloatTag : Tag
         return false;
     }
 
+    /// <inheritdoc/>
     public override FloatTag clone()
     {
         return new FloatTag(this.name, this.data);

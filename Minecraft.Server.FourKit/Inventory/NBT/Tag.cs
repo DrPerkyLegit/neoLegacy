@@ -1,22 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
+﻿using Minecraft.Server.FourKit.Inventory.Meta;
 
 namespace Minecraft.Server.FourKit.Inventory.NBT;
 
+/// <summary>
+/// Represents the base type of tag, see <see cref="ItemMeta"/> on how to use it
+/// </summary>
 public class Tag
 {
-    public static readonly byte TAG_INVALID = 99;
-    public static readonly byte TAG_Byte = 1;
-    public static readonly byte TAG_Short = 2;
-    public static readonly byte TAG_Int = 3;
-    public static readonly byte TAG_Long = 4;
-    public static readonly byte TAG_Float = 5;
-    public static readonly byte TAG_Double = 6;
-    public static readonly byte TAG_String = 8;
-    public static readonly byte TAG_List = 9;
-    public static readonly byte TAG_Compound = 10;
+    internal static readonly byte TAG_INVALID = 99;
+    internal static readonly byte TAG_Byte = 1;
+    internal static readonly byte TAG_Short = 2;
+    internal static readonly byte TAG_Int = 3;
+    internal static readonly byte TAG_Long = 4;
+    internal static readonly byte TAG_Float = 5;
+    internal static readonly byte TAG_Double = 6;
+    internal static readonly byte TAG_String = 8;
+    internal static readonly byte TAG_List = 9;
+    internal static readonly byte TAG_Compound = 10;
 
     protected string name;
     public readonly byte type;
@@ -27,12 +27,25 @@ public class Tag
         this.type = type;
     }
 
+    /// <summary>
+    /// Gets the name of this NBT tag.
+    /// </summary>
+    /// <returns>NBT tag name</returns>
     public string getName() => this.name;
+
+    /// <summary>
+    /// Sets the name of this NBT tag.
+    /// </summary>
+    /// <param name="name">The name to set.</param>
     public void setName(string name)
     {
         this.name = name;
     }
 
+    /// <summary>
+    /// Check if other tag matches this tags data
+    /// </summary>
+    /// <returns>true if matching</returns>
     public virtual bool matches(Tag other)
     {
         if (this.name != other.name)
@@ -41,6 +54,10 @@ public class Tag
         return true;
     }
 
+    /// <summary>
+    /// Clones the tag
+    /// </summary>
+    /// <returns>new tag instance with cloned data</returns>
     public virtual Tag clone()
     {
         return new Tag(this.name, Tag.TAG_INVALID);

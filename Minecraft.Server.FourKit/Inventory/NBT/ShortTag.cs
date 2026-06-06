@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Minecraft.Server.FourKit.Inventory.NBT;
 
+/// <summary>
+/// An NBT tag that stores a short, see <see cref="ItemMeta"/> on how to use it
+/// </summary>
 public class ShortTag : Tag
 {
     public short data;
@@ -13,6 +16,7 @@ public class ShortTag : Tag
         this.data = value;
     }
 
+    /// <inheritdoc/>
     public override bool matches(Tag other)
     {
         if (other is ShortTag otherTag)
@@ -26,6 +30,7 @@ public class ShortTag : Tag
         return false;
     }
 
+    /// <inheritdoc/>
     public override ShortTag clone()
     {
         return new ShortTag(this.name, this.data);
