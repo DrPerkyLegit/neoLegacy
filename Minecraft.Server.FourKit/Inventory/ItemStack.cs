@@ -184,7 +184,7 @@ public class ItemStack
     {
         if (item == null)
         {
-            buffer[offset] = 0;
+            buffer[offset] = 1;
             offset += 1;
         }
         else

@@ -1342,8 +1342,7 @@ void __cdecl NativeOpenVirtualContainer(int entityId, int nativeType, int slotCo
     
     for (int i = 0; i < slotCount; i++)
     {
-        std::shared_ptr<ItemInstance> item = Transformation_ReadItemFromBuffer(containerBuffer, offset);
-        container->setItem(i, (item == nullptr || item->id == 0 || item->count < 0 ? nullptr : item));
+        container->setItem(i, Transformation_ReadItemFromBuffer(containerBuffer, offset));
     }
 
     player->openContainer(container);
