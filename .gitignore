@@ -440,6 +440,3 @@ result-*
 
 # macOS
 .DS_Store
-
-# Doxygen page
-doxygen_pages/
