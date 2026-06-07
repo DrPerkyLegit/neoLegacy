@@ -1567,6 +1567,11 @@ void PlayerConnection::handleInteract(shared_ptr<InteractPacket> packet)
 			player->attack(target);
 		}
 	}
+#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+	else {
+		FourKitBridge::FirePlayerInteractFakeEntity(player->entityId, packet->target, packet->action);
+	}
+#endif
 
 }
 

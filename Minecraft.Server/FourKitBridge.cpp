@@ -72,6 +72,7 @@ typedef int(__stdcall *fn_fire_player_interact_entity)(int playerEntityId,
                                                        int targetEntityId, int targetEntityTypeId,
                                                        int dimId, double targetX, double targetY, double targetZ,
                                                        float targetHealth, float targetMaxHealth, float targetEyeHeight);
+typedef void(__stdcall *fn_fire_player_interact_fake_entity)(int playerEntityId, int targetEntityId, int actionType);
 typedef int(__stdcall *fn_fire_player_pickup_item)(int playerEntityId,
                                                    int itemEntityId, int dimId, double itemX, double itemY, double itemZ,
                                                    int itemId, int itemCount, int itemAux, int remaining,
@@ -147,6 +148,7 @@ static fn_fire_player_drop_item s_managedFirePlayerDropItem = nullptr;
 static fn_set_inventory_callbacks s_managedSetInventoryCallbacks = nullptr;
 static fn_fire_player_interact s_managedFirePlayerInteract = nullptr;
 static fn_fire_player_interact_entity s_managedFirePlayerInteractEntity = nullptr;
+static fn_fire_player_interact_fake_entity s_managedFirePlayerInteractFakeEntity = nullptr;
 static fn_fire_player_pickup_item s_managedFirePlayerPickupItem = nullptr;
 static fn_fire_inventory_open s_managedFireInventoryOpen = nullptr;
 static fn_handle_player_command s_managedHandlePlayerCommand = nullptr;
@@ -237,7 +239,8 @@ void Initialize()
         {L"FirePlayerDropItem", (void **)&s_managedFirePlayerDropItem},
         {L"SetInventoryCallbacks", (void **)&s_managedSetInventoryCallbacks},
         {L"FirePlayerInteract", (void **)&s_managedFirePlayerInteract},
-        {L"FirePlayerInteractEntity", (void **)&s_managedFirePlayerInteractEntity},
+        {L"FirePlayerInteractEntity", (void**)&s_managedFirePlayerInteractEntity},
+        {L"FirePlayerInteractFakeEntity", (void **)&s_managedFirePlayerInteractFakeEntity},
         {L"FirePlayerPickupItem", (void **)&s_managedFirePlayerPickupItem},
         {L"FireInventoryOpen", (void **)&s_managedFireInventoryOpen},
         {L"HandlePlayerCommand", (void **)&s_managedHandlePlayerCommand},
@@ -837,6 +840,15 @@ bool FirePlayerInteractEntity(int playerEntityId,
                                                    targetHealth, targetMaxHealth, targetEyeHeight);
 
     return result != 0;
+}
+
+void FirePlayerInteractFakeEntity(int playerEntityId, int targetEntityId, int actionType) {
+    if (!s_initialized || !s_managedFirePlayerInteractFakeEntity)
+    {
+        return;
+    }
+
+    s_managedFirePlayerInteractFakeEntity(playerEntityId, targetEntityId,  actionType);
 }
 
 bool FirePlayerPickupItem(int playerEntityId,

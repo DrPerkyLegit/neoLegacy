@@ -77,6 +77,7 @@ namespace FourKitBridge
                                   int targetEntityId, int targetEntityTypeId,
                                   int dimId, double targetX, double targetY, double targetZ,
                                   float targetHealth, float targetMaxHealth, float targetEyeHeight);
+    void FirePlayerInteractFakeEntity(int playerEntityId, int targetEntityId, int actionType);
     bool FirePlayerPickupItem(int playerEntityId,
                               int itemEntityId, int dimId, double itemX, double itemY, double itemZ,
                               int itemId, int itemCount, int itemAux, int remaining,
@@ -179,6 +180,7 @@ namespace FourKitBridge
         return false;
     }
     inline bool FirePlayerInteractEntity(int, int, int, int, double, double, double, float, float, float) { return false; }
+    inline void FirePlayerInteractFakeEntity(int, int, int) { }
     inline bool FirePlayerPickupItem(int, int, int, double, double, double, int itemId, int itemCount, int itemAux, int, int *outItemId, int *outItemCount, int *outItemAux)
     {
         if (outItemId) *outItemId = itemId;

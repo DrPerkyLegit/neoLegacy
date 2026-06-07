@@ -737,6 +737,29 @@ public static partial class FourKitHost
     }
 
     [UnmanagedCallersOnly]
+    public static void FirePlayerInteractFakeEntity(int playerEntityId, int targetEntityId, int actionType)
+    {
+        try
+        {
+            var player = FourKit.GetPlayerByEntityId(playerEntityId);
+            if (player == null)
+                return;
+
+            SyncPlayerFromNative(player);
+
+            var evt = new PlayerInteractFakeEntityEvent(player, targetEntityId, actionType);
+            FourKit.FireEvent(evt);
+
+            return;
+        }
+        catch (Exception ex)
+        {
+            ServerLog.Error("fourkit", $"FirePlayerInteractFakeEntity error: {ex}");
+            return;
+        }
+    }
+
+    [UnmanagedCallersOnly]
     public static int FirePlayerPickupItem(int playerEntityId,
         int itemEntityId, int dimId, double itemX, double itemY, double itemZ,
         int itemId, int itemCount, int itemAux, int remaining,
