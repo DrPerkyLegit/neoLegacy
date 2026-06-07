@@ -2,7 +2,7 @@
 
 Before being able to run FourKit, you need [.NET 10 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
-After you install .NET 10, grab the [latest release from github](https://github.com/sylvessa/MinecraftConsoles/releases/tag/nightly-dedicated-server)
+After you install .NET 10, grab the [latest release from github](https://github.com/DrPerkyLegit/neoLegacy/releases/tag/Nightly-Dedicated-Server)
 
 If you are just updating FourKit, you only need to install Minecraft.Server.exe and Minecraft.Server.FourKit.dll and replace them.
 
