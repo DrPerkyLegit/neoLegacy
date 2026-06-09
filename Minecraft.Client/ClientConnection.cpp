@@ -4323,7 +4323,8 @@ void ClientConnection::handleSetPlayerTeamPacket(shared_ptr<SetPlayerTeamPacket>
 
 void ClientConnection::handleParticleEvent(shared_ptr<LevelParticlesPacket> packet)
 {
-	ePARTICLE_TYPE particleId = (ePARTICLE_TYPE)Integer::parseInt(packet->getName());
+	wstring pktName = packet->getName(); // packet->getName() is a temporary, patches error on linux build
+	ePARTICLE_TYPE particleId = (ePARTICLE_TYPE)Integer::parseInt(pktName);
 
 	for (int i = 0; i < packet->getCount(); i++)
 	{
