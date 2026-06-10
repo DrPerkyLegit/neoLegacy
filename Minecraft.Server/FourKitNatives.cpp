@@ -878,7 +878,7 @@ void Transformation_WriteTagToBuffer(Tag* tag, unsigned char* outBuffer, int& of
 
 Tag* Transformation_ReadTagFromBuffer(unsigned char* outBuffer, int& offset) {
     bool isNull = outBuffer[offset]; offset += 1;
-    if (isNull) return nullptr;
+    if (isNull != 0) return nullptr;
 
     wstring tagName = L"";
     {
@@ -904,22 +904,22 @@ Tag* Transformation_ReadTagFromBuffer(unsigned char* outBuffer, int& offset) {
             return new ShortTag(tagName, value);
         } else if (tagType == Tag::TAG_Int) {
             int value = 0;
-            value |= outBuffer[offset]; offset += 1;
-            value |= outBuffer[offset] << 8; offset += 1;
-            value |= outBuffer[offset] << 16; offset += 1;
             value |= outBuffer[offset] << 24; offset += 1;
+            value |= outBuffer[offset] << 16; offset += 1;
+            value |= outBuffer[offset] << 8; offset += 1;
+            value |= outBuffer[offset]; offset += 1;
 
             return new IntTag(tagName, value);
         } else if (tagType == Tag::TAG_Long || tagType == Tag::TAG_Float || tagType == Tag::TAG_Double) {
-            long value = 0;
-            value |= outBuffer[offset]; offset += 1;
-            value |= outBuffer[offset] << 8; offset += 1;
-            value |= outBuffer[offset] << 16; offset += 1;
-            value |= outBuffer[offset] << 24; offset += 1;
-            value |= outBuffer[offset] << 32; offset += 1;
-            value |= outBuffer[offset] << 40; offset += 1;
-            value |= outBuffer[offset] << 48; offset += 1;
-            value |= outBuffer[offset] << 56; offset += 1;
+            int64_t value = 0;
+            value |= (int64_t)outBuffer[offset] << 56; offset += 1;
+            value |= (int64_t)outBuffer[offset] << 48; offset += 1;
+            value |= (int64_t)outBuffer[offset] << 40; offset += 1;
+            value |= (int64_t)outBuffer[offset] << 32; offset += 1;
+            value |= (int64_t)outBuffer[offset] << 24; offset += 1;
+            value |= (int64_t)outBuffer[offset] << 16; offset += 1;
+            value |= (int64_t)outBuffer[offset] << 8; offset += 1;
+            value |= (int64_t)outBuffer[offset]; offset += 1;
 
             if (tagType == Tag::TAG_Long) {
                 return new LongTag(tagName, value);
@@ -935,10 +935,12 @@ Tag* Transformation_ReadTagFromBuffer(unsigned char* outBuffer, int& offset) {
             short length = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
 
             for (int i = 0; i < length; i++) {
-                unsigned short value = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
+                unsigned short castedChar = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
 
-                tagName += (wchar_t)value;
+                value += (wchar_t)castedChar;
             }
+
+            return new StringTag(tagName, value);
         } else if (tagType == Tag::TAG_List) {
             ListTag<Tag>* listTag = new ListTag<Tag>(tagName);
             short length = ((outBuffer[offset] << 8) | outBuffer[offset + 1]); offset += 2;
@@ -958,7 +960,7 @@ Tag* Transformation_ReadTagFromBuffer(unsigned char* outBuffer, int& offset) {
             for (int i = 0; i < length; i++) {
                 Tag* newTag = Transformation_ReadTagFromBuffer(outBuffer, offset);
                 if (newTag != nullptr) {
-                    compoundTag->put(tagName, newTag);
+                    compoundTag->put(newTag->getName(), newTag);
                 }
             }
 
@@ -1082,7 +1084,7 @@ void Transformation_ReadItemMetaFromBuffer(ItemInstance* item, unsigned char* it
                     wchar_t c = (itemData[offset] << 8) | itemData[offset + 1]; offset += 2;
                     loreString.push_back(c);
                 }
-                loreList->add(new StringTag(loreString));
+                loreList->add(new StringTag(L"", loreString));
             }
             if (item->tag->getCompound(L"display") == nullptr) {
                 item->tag->putCompound(L"display", new CompoundTag());
