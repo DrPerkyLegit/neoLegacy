@@ -62,6 +62,7 @@ const WCHAR *ConsoleSoundEngine::wchSoundNames[eSoundType_MAX]=
 	L"mob.cat.meow",					//  eSoundType_MOB_CAT_MEOW
 	// 4J-PB - correct the name of the event for hitting ocelots
 	L"mob.cat.hit",					//  eSoundType_MOB_CAT_HITT
+	L"mob.cat.hiss",					//  eSoundType_MOB_CAT_HISS
 //	L"mob.irongolem.throw",				//  eSoundType_MOB_IRONGOLEM_THROW
 //	L"mob.irongolem.hit",				//  eSoundType_MOB_IRONGOLEM_HIT
 //	L"mob.irongolem.death",				//  eSoundType_MOB_IRONGOLEM_DEATH

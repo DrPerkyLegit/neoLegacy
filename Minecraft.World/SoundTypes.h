@@ -58,6 +58,7 @@ enum eSOUND_TYPE
 	eSoundType_MOB_CAT_PURREOW,
 	eSoundType_MOB_CAT_MEOW,
 	eSoundType_MOB_CAT_HIT,
+	eSoundType_MOB_CAT_HISS,
 	//	eSoundType_MOB_IRONGOLEM_THROW,
 	//	eSoundType_MOB_IRONGOLEM_HIT,
 	//	eSoundType_MOB_IRONGOLEM_DEATH,
