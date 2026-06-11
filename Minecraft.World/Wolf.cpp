@@ -62,6 +62,7 @@ void Wolf::registerAttributes()
 	TamableAnimal::registerAttributes();
 
 	getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3f);
+	getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(2);
 
 	if (isTame())
 	{
@@ -71,6 +72,18 @@ void Wolf::registerAttributes()
 	{
 		getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(START_HEALTH);
 	}
+}
+
+int Wolf::getHealthCap() {
+	return TAME_HEALTH * 2;
+}
+
+int Wolf::getAttackCap() {
+	return 8;
+}
+
+int Wolf::getMovementCap() {
+	return 0.45f;
 }
 
 bool Wolf::useNewAi()
@@ -289,7 +302,9 @@ bool Wolf::hurt(DamageSource *source, float dmg)
 		if (entity != nullptr && entity->instanceof(eTYPE_PLAYER))
 		{
 			shared_ptr<Player> attacker = dynamic_pointer_cast<Player>(entity);
-			attacker->canHarmPlayer(getOwnerUUID());
+			if (!attacker->canHarmPlayer(getOwnerUUID())) {
+				return false;
+			}
 		}
 	}
 
@@ -306,8 +321,7 @@ bool Wolf::hurt(DamageSource *source, float dmg)
 
 bool Wolf::doHurtTarget(shared_ptr<Entity> target)
 {
-	int damage = isTame() ? 4 : 2;
-	return target->hurt(DamageSource::mobAttack(dynamic_pointer_cast<Mob>(shared_from_this())), damage);
+	return target->hurt(DamageSource::mobAttack(dynamic_pointer_cast<Mob>(shared_from_this())), getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getBaseValue());
 }
 
 void Wolf::setTame(bool value)
@@ -334,6 +348,10 @@ void Wolf::tame(const wstring &wsOwnerUUID, bool bDisplayTamingParticles, bool b
 
 	setOwnerUUID(wsOwnerUUID);
 
+	getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(4);
+
+	updateNametag(L"Wolf");
+
 	// We'll not show the taming particles if this is a baby wolf
 	spawnTamingParticles(bDisplayTamingParticles);
 }
@@ -350,7 +368,7 @@ bool Wolf::mobInteract(shared_ptr<Player> player)
 			{
 				FoodItem *food = dynamic_cast<FoodItem *>( Item::items[item->id] );
 
-				if (food->isMeat() && entityData->getFloat(DATA_HEALTH_ID) < MAX_HEALTH)
+				if (food->isMeat() && entityData->getFloat(DATA_HEALTH_ID) < getMaxHealth())
 				{
 					heal(food->getNutrition());
 					// 4J-PB - don't lose the bone in creative mode
@@ -460,7 +478,7 @@ float Wolf::getTailAngle()
 	} 
 	else if (isTame()) 
 	{
-		return (0.55f - (MAX_HEALTH - entityData->getFloat(DATA_HEALTH_ID)) * 0.02f) * PI;
+		return (0.55f - (getMaxHealth() - getHealth()) *0.02f) * PI;
 	}
 	return 0.20f * PI;
 }
@@ -524,6 +542,9 @@ shared_ptr<AgableMob> Wolf::getBreedOffspring(shared_ptr<AgableMob> target)
 			// set the baby wolf to be tame, and assign the owner
 			pBabyWolf->tame(getOwnerUUID(),false,false);
 		}
+
+		pBabyWolf->setStatsFromPair(dynamic_pointer_cast<TamableAnimal>(shared_from_this()), dynamic_pointer_cast<TamableAnimal>(target));
+
 		return pBabyWolf;
 	}
 	else
@@ -585,6 +606,14 @@ bool Wolf::wantsToAttack(shared_ptr<LivingEntity> target, shared_ptr<LivingEntit
 			return false;
 		}
 	}
+	// never target cats that has this player as owner
+	if ((target->GetType() == eTYPE_OCELOT))
+	{
+		shared_ptr<Ocelot> catTarget = dynamic_pointer_cast<Ocelot>(target);
+		if (catTarget->isTame() && catTarget->getOwner() == owner) {
+			return false;
+		}
+	}
 	if ( target->instanceof(eTYPE_PLAYER) && owner->instanceof(eTYPE_PLAYER) && !dynamic_pointer_cast<Player>(owner)->canHarmPlayer(dynamic_pointer_cast<Player>(target) ))
 	{
 		// pvp is off
@@ -595,5 +624,6 @@ bool Wolf::wantsToAttack(shared_ptr<LivingEntity> target, shared_ptr<LivingEntit
 	{
 		return false;
 	}
+	
 	return true;
 }

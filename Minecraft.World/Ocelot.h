@@ -51,6 +51,7 @@ protected:
 
 public:
 	virtual bool useNewAi();
+	virtual void setTarget(shared_ptr<LivingEntity> target);
 
 protected:
 	virtual void registerAttributes();
@@ -90,6 +91,14 @@ public:
 	// 4J-JEV: Added for tooltips, is cat annoying player by sitting on chest or furnace.
 private:
 	void setSittingOnTile(bool val);
+	void setAngry(bool val);
 public:
 	bool isSittingOnTile();
+	bool isAngry();
+
+	virtual int getHealthCap();
+	virtual int getAttackCap();
+	virtual int getMovementCap();
+
+	virtual bool wantsToAttack(shared_ptr<LivingEntity> target, shared_ptr<LivingEntity> owner);
 };

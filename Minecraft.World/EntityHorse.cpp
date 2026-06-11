@@ -353,7 +353,9 @@ bool EntityHorse::hurt(DamageSource *damagesource, float dmg)
 		if (entity != nullptr && entity->instanceof(eTYPE_PLAYER))
 		{
 			shared_ptr<Player> attacker = dynamic_pointer_cast<Player>(entity);
-			attacker->canHarmPlayer(getOwnerName());
+			if (!attacker->canHarmPlayer(getOwnerName())) {
+				return false;
+			}
 		}
 	}
 

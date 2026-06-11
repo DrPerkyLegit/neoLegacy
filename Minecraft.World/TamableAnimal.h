@@ -11,6 +11,10 @@ protected:
 	static const int DATA_FLAGS_ID = 16;
 	static const int DATA_OWNERUUID_ID = 17;
 
+	static const int DATA_LEVEL = 31;
+	static const int DATA_LEVEL_EXP = 30;
+
+
 	SitGoal *sitGoal;
 
 public:
@@ -39,4 +43,16 @@ public:
 	bool wantsToAttack(shared_ptr<LivingEntity> target, shared_ptr<LivingEntity> owner);
 	Team *getTeam();
 	bool isAlliedTo(shared_ptr<LivingEntity> other);
+
+	void setStatsFromPair(shared_ptr<TamableAnimal> parent1, shared_ptr<TamableAnimal> parent2);
+
+	virtual int getHealthCap();
+	virtual int getAttackCap();
+	virtual int getMovementCap();
+
+	int getLevel();
+	void setLevel(int level);
+	void updateNametag(wstring name);
+
+	virtual void registerAttributes();
 };

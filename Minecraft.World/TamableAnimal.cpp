@@ -6,6 +6,10 @@
 #include "ParticleTypes.h"
 #include "TamableAnimal.h"
 
+#include "AttributeInstance.h"
+#include "BaseAttributeMap.h"
+#include "SharedMonsterAttributes.h"
+
 TamableAnimal::TamableAnimal(Level *level) : Animal(level)
 {
 	sitGoal = new SitGoal(this);
@@ -21,6 +25,9 @@ void TamableAnimal::defineSynchedData()
 	Animal::defineSynchedData();
 	entityData->define(DATA_FLAGS_ID, static_cast<byte>(0));
 	entityData->define(DATA_OWNERUUID_ID, L"");
+
+	entityData->define(DATA_LEVEL, 1);
+	entityData->define(DATA_LEVEL_EXP, 0);
 }
 
 void TamableAnimal::addAdditonalSaveData(CompoundTag *tag)
@@ -47,6 +54,8 @@ void TamableAnimal::addAdditonalSaveData(CompoundTag *tag)
 	}
 #endif
 	tag->putBoolean(L"Sitting", isSitting());
+
+	tag->putInt(L"TameLevel", getLevel());
 }
 
 void TamableAnimal::readAdditionalSaveData(CompoundTag *tag)
@@ -69,6 +78,12 @@ void TamableAnimal::readAdditionalSaveData(CompoundTag *tag)
 	}
 	sitGoal->wantToSit(tag->getBoolean(L"Sitting"));
 	setSitting(tag->getBoolean(L"Sitting"));
+
+	setLevel(tag->getInt(L"TameLevel"));
+}
+
+void TamableAnimal::registerAttributes() {
+	getAttributes()->registerAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(1);
 }
 
 void TamableAnimal::spawnTamingParticles(bool success)
@@ -192,4 +207,122 @@ bool TamableAnimal::isAlliedTo(shared_ptr<LivingEntity> other)
 		}
 	}
 	return Animal::isAlliedTo(other);
+}
+
+int TamableAnimal::getHealthCap() {
+	return 20;
+}
+
+int TamableAnimal::getAttackCap() {
+	return 1;
+}
+
+int TamableAnimal::getMovementCap() {
+	return 0.3f;
+}
+
+void TamableAnimal::setStatsFromPair(shared_ptr<TamableAnimal> parent1, shared_ptr<TamableAnimal> parent2) {
+	{
+		float finalHealth = getMaxHealth();
+
+		if (random->nextFloat() < 0.5f) {
+			finalHealth = parent1->getMaxHealth();
+		} else {
+			finalHealth = parent2->getMaxHealth();
+		}
+
+		if (random->nextFloat() < 0.15f) {
+			
+			if (random->nextFloat() < 0.05f) {
+				int randomValue = random->nextInt(10);
+				finalHealth += max(randomValue, 4);
+			} else {
+				finalHealth += random->nextInt(5);
+			}
+		}
+		
+		getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(min(finalHealth, getHealthCap()));
+	}
+
+	{
+		float finalSpeed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getBaseValue();
+
+		if (random->nextFloat() < 0.5f) {
+			finalSpeed = parent1->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getBaseValue();
+		} else {
+			finalSpeed = parent2->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getBaseValue();
+		}
+
+		if (random->nextFloat() < 0.10f) {
+
+			if (random->nextFloat() < 0.02f) {
+				finalSpeed += random->nextFloat() * 2;
+			} else {
+				finalSpeed += random->nextFloat() / 2;
+			}
+		}
+
+		getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(min(finalSpeed, getMovementCap()));
+	}
+
+	{
+		int finalDamage = getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getBaseValue();
+
+		if (random->nextFloat() < 0.5f) {
+			finalDamage = parent1->getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getBaseValue();
+		} else {
+			finalDamage = parent2->getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getBaseValue();
+		}
+
+		if (random->nextFloat() < 0.08f) {
+			if (random->nextFloat() < 0.02f) {
+				int randomValue = random->nextInt(5);
+				finalDamage += max(randomValue, 2);
+			} else {
+				finalDamage += random->nextInt(2);
+			}
+		}
+
+		getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(min(finalDamage, getAttackCap()));
+	}
+
+	{
+		int parent1Level = parent1->getLevel();
+		int parent2Level = parent2->getLevel();
+
+		int higher = max(parent1Level, parent2Level);
+		int lower = min(parent1Level, parent2Level);
+
+		int finalLevel = 0;
+		
+		if (random->nextFloat() < 0.6f) {
+			finalLevel = higher;
+		} else {
+			finalLevel = lower;
+		}
+
+		float mutationRoll = random->nextFloat();
+
+		if (mutationRoll < 0.025) {
+			int randomValue = random->nextInt(10);
+			finalLevel += max(randomValue, 2);
+		} else if (mutationRoll < 0.1f) {
+			finalLevel += 2;
+		}
+
+		setLevel(finalLevel);
+	}
+}
+
+int TamableAnimal::getLevel() {
+	return entityData->getInteger(DATA_LEVEL);
+}
+
+void TamableAnimal::setLevel(int level) {
+	entityData->set(DATA_LEVEL, level);
+}
+
+void TamableAnimal::updateNametag(wstring name) {
+	//setCustomName(L"\u00a7f" + name + L"\u00a72 Level " + std::to_wstring(getLevel()) + L"\u00a7r");
+	//setCustomNameVisible(true);
 }

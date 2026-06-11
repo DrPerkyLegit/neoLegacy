@@ -35,7 +35,7 @@ public:
 	static const float MAX_ENCHANTED_ARMOR_CHANCE;
 	static const float MAX_ENCHANTED_WEAPON_CHANCE;
 
-private:
+protected:
 	static const int DATA_CUSTOM_NAME = 10;
 	static const int DATA_CUSTOM_NAME_VISIBLE = 11;
 

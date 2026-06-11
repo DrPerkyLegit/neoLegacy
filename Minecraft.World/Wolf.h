@@ -17,7 +17,6 @@ private:
 	static const int DATA_COLLAR_COLOR = 20;
 
     static const int START_HEALTH = 8;
-    static const int MAX_HEALTH = 20;
     static const int TAME_HEALTH = 20;
 
 	float interestedAngle, interestedAngleO;
@@ -88,5 +87,9 @@ protected:
 	virtual bool removeWhenFarAway();
 
 public:
+	virtual int getHealthCap();
+	virtual int getAttackCap();
+	virtual int getMovementCap();
+
 	virtual bool wantsToAttack(shared_ptr<LivingEntity> target, shared_ptr<LivingEntity> owner);
 };

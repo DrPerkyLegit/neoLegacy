@@ -45,15 +45,19 @@ Ocelot::Ocelot(Level *level) : TamableAnimal(level)
 	goalSelector.addGoal(1, new FloatGoal(this));
 	goalSelector.addGoal(2, sitGoal, false);
 	goalSelector.addGoal(3, temptGoal = new TemptGoal(this, SNEAK_SPEED_MOD, Item::fish_raw_Id, true), false);
-	goalSelector.addGoal(5, new FollowOwnerGoal(this, FOLLOW_SPEED_MOD, 10, 5));
-	goalSelector.addGoal(6, new OcelotSitOnTileGoal(this, SPRINT_SPEED_MOD));
-	goalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.3f));
-	goalSelector.addGoal(8, new OcelotAttackGoal(this));
+	goalSelector.addGoal(5, new LeapAtTargetGoal(this, 0.3f));
+	goalSelector.addGoal(6, new OcelotAttackGoal(this));
+	goalSelector.addGoal(7, new FollowOwnerGoal(this, FOLLOW_SPEED_MOD, 10, 5));
+	goalSelector.addGoal(8, new OcelotSitOnTileGoal(this, SPRINT_SPEED_MOD));
 	goalSelector.addGoal(9, new BreedGoal(this, WALK_SPEED_MOD));
 	goalSelector.addGoal(10, new RandomStrollGoal(this, WALK_SPEED_MOD));
 	goalSelector.addGoal(11, new LookAtPlayerGoal(this, typeid(Player), 10));
 
-	targetSelector.addGoal(1, new NonTameRandomTargetGoal(this, typeid(Chicken), 750, false));
+
+	targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
+	targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
+	targetSelector.addGoal(3, new HurtByTargetGoal(this, true));
+	targetSelector.addGoal(4, new NonTameRandomTargetGoal(this, typeid(Chicken), 750, false));
 }
 
 void Ocelot::defineSynchedData()
@@ -116,12 +120,38 @@ bool Ocelot::useNewAi()
 	return true;
 }
 
+void Ocelot::setTarget(shared_ptr<LivingEntity> target)
+{
+	TamableAnimal::setTarget(target);
+	if (target == nullptr)
+	{
+		setAngry(false);
+	}
+	else if (!isTame())
+	{
+		setAngry(true);
+	}
+}
+
 void Ocelot::registerAttributes()
 {
 	TamableAnimal::registerAttributes();
 
 	getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10);
 	getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3f);
+	getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(3);
+}
+
+int Ocelot::getHealthCap() {
+	return 35;
+}
+
+int Ocelot::getAttackCap() {
+	return 6;
+}
+
+int Ocelot::getMovementCap() {
+	return 0.7f;
 }
 
 void Ocelot::causeFallDamage(float distance)
@@ -133,6 +163,8 @@ void Ocelot::addAdditonalSaveData(CompoundTag *tag)
 {
 	TamableAnimal::addAdditonalSaveData(tag);
 	tag->putInt(L"CatType", getCatType());
+
+	tag->putBoolean(L"Angry", isAngry());
 }
 
 void Ocelot::readAdditionalSaveData(CompoundTag *tag)
@@ -146,12 +178,17 @@ void Ocelot::readAdditionalSaveData(CompoundTag *tag)
 	{
 		setCatType(TYPE_OCELOT);
 	}
+
+	setAngry(tag->getBoolean(L"Angry"));
 }
 
 int Ocelot::getAmbientSound()
 {
 	if (isTame())
 	{
+		if (isAngry()) {
+			return eSoundType_MOB_CAT_HISS;
+		}
 		if (isInLove())
 		{
 			return eSoundType_MOB_CAT_PURR;
@@ -188,7 +225,7 @@ int Ocelot::getDeathLoot()
 
 bool Ocelot::doHurtTarget(shared_ptr<Entity> target)
 {
-	return target->hurt(DamageSource::mobAttack(dynamic_pointer_cast<Mob>(shared_from_this())), 3);
+	return target->hurt(DamageSource::mobAttack(dynamic_pointer_cast<Mob>(shared_from_this())), getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getBaseValue());
 }
 
 bool Ocelot::hurt(DamageSource *source, float dmg)
@@ -243,6 +280,8 @@ bool Ocelot::mobInteract(shared_ptr<Player> player)
 					spawnTamingParticles(true);
 					sitGoal->wantToSit(true);
 					level->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED);
+
+					updateNametag(L"Cat");
 				}
 				else
 				{
@@ -267,6 +306,9 @@ shared_ptr<AgableMob> Ocelot::getBreedOffspring(shared_ptr<AgableMob> target)
 			offspring->setOwnerUUID(getOwnerUUID());
 			offspring->setTame(true);
 			offspring->setCatType(getCatType());
+
+			offspring->updateNametag(L"Cat");
+			offspring->setStatsFromPair(dynamic_pointer_cast<TamableAnimal>(shared_from_this()), dynamic_pointer_cast<TamableAnimal>(target));
 		}
 		return offspring;
 	}
@@ -381,4 +423,53 @@ bool Ocelot::isSittingOnTile()
 {
 	byte current = entityData->getByte(DATA_FLAGS_ID);
 	return (current & 0x02) > 0;
+}
+
+void Ocelot::setAngry(bool val)
+{
+	byte current = entityData->getByte(DATA_FLAGS_ID);
+	entityData->set(DATA_FLAGS_ID, val ? static_cast<byte>(current | 0x08) : static_cast<byte>(current & ~0x08));
+}
+
+bool Ocelot::isAngry()
+{
+	return (entityData->getByte(DATA_FLAGS_ID) & 0x08) != 0;
+}
+
+bool Ocelot::wantsToAttack(shared_ptr<LivingEntity> target, shared_ptr<LivingEntity> owner)
+{
+	// filter un-attackable mobs
+	if (/*target->GetType() == eTYPE_CREEPER || */target->GetType() == eTYPE_GHAST)
+	{
+		return false;
+	}
+	// never target wolves that has this player as owner
+	if (target->GetType() == eTYPE_WOLF)
+	{
+		shared_ptr<Wolf> wolfTarget = dynamic_pointer_cast<Wolf>(target);
+		if (wolfTarget->isTame() && wolfTarget->getOwner() == owner)
+		{
+			return false;
+		}
+	}
+	// never target cats that has this player as owner
+	if ((target->GetType() == eTYPE_OCELOT))
+	{
+		shared_ptr<Ocelot> catTarget = dynamic_pointer_cast<Ocelot>(target);
+		if (catTarget->isTame() && catTarget->getOwner() == owner) {
+			return false;
+		}
+	}
+	if (target->instanceof(eTYPE_PLAYER) && owner->instanceof(eTYPE_PLAYER) && !dynamic_pointer_cast<Player>(owner)->canHarmPlayer(dynamic_pointer_cast<Player>(target)))
+	{
+		// pvp is off
+		return false;
+	}
+	// don't attack tame horses
+	if ((target->GetType() == eTYPE_HORSE) && dynamic_pointer_cast<EntityHorse>(target)->isTamed())
+	{
+		return false;
+	}
+
+	return true;
 }
